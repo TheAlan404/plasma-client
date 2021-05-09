@@ -20,9 +20,9 @@ const util = require("util");
 const cproc = require("child_process")
 
 if(parseInt(process.versions.node.split('.')[0]) < 14){
-	console.log("HATA! NodeJS Sürümünüz eski!");
-	console.log("Plasma'nın çalışabilmesi için lütfen güncelleyiniz.");
-	console.log("Gerekli sürüm: En az 14");
+	console.log("ERROR! Your NodeJS version is old!");
+	console.log("For Plasma to be able to run you must upgrade it.");
+	console.log("Required version: At least 14");
 	console.log("> https://nodejs.org/");
 	process.exit();
 }
@@ -35,20 +35,20 @@ try {
 	if(!require("nmp-player").SongPlayer) throw new Error("old nmp-player");
 } catch(e){
 	// install deps
-	const badFolders = ["Desktop", "Masaüstü", "İndirilenler", "Belgeler"];
+	const badFolders = ["Desktop", "Masaüstü", "Download", "İndirilenler", "Belgeler"];
 	if(badFolders.filter((fname) => __dirname.endsWith(fname)).length != 0) {
-		console.log("--- /!\ --- DİKKAT --- /!\ ---\n")
-		console.log(" Plasma Client kendisini kurmak için bir klasör gerektirir.")
-		console.log(" Lütfen Plasma Client için bir klasör açın ve dosyaları oraya koyun.\n")
-		console.log("--- /!\ --- DİKKAT --- /!\ ---")
+		console.log("--- /!\ --- WARNING --- /!\ ---\n")
+		console.log(" Plasma Client uses a folder for its configs and libraries.")
+		console.log(" Please put Plasma inside a folder.\n")
+		console.log("--- /!\ --- WARNING --- /!\ ---")
 		process.exit();
 	};
 	const deps = ["minecraft-protocol", "chalk", "prismarine-chat", "prismarine-nbt", "node-fetch", 
 	"clipboardy", "nmp-player", "uuid", "socket.io-client", "nbs.js", "adm-zip"];
-	console.log("--- Plasma Client Kurulum ---");
-	console.log("> Kuruluyor... (Yada güncelleniliyor)");
+	console.log("--- Plasma Client Install ---");
+	console.log("> Installing... (or updating)");
 	let txt = cproc.execSync("npm install "+deps.join(" "));
-	console.log("> Kurulum tamamlandı! Başlatılıyor...");
+	console.log("> Install complete! Starting...");
 };
 
 const mc = require("minecraft-protocol");
@@ -61,21 +61,23 @@ const { SongPlayer } = require("nmp-player");
 const UUIDS = require("uuid");
 const io = require("socket.io-client");
 const NBS = require("nbs.js");
-const AdmZip = require('adm-zip');
+//const AdmZip = require('adm-zip'); // who put this here and *why*? -den
 
 const version = "1.1.1";
 
 let socketHost = "";
 let socketCredentials = { id: null, token: null, };
 
-let txtApiHost = "https:"+"//akiyamabot.glitch.me";
+let txtApiHost = "https:"+"//akiyamabot.glitch.me"; // txt system is deprecated + incomplete -den
 let txtApiURL = txtApiHost+"/api/v1/txt/";
 let notifyBotPlayers = {};
 
 let socket = null;
 let activeRoom = "global";
 
+/** List of servers got from appdata */
 let server_list = [];
+/** Last direct connect IP got from appdata*/
 let direct_connect;
 let password_list = {};
 let Prefix = ".";
@@ -104,13 +106,13 @@ let disallow = {
 	recieve: {
 		kick_disconnect: ({ reason }) => {
 			setTimeout(() => {
-				notify("Sunucudan atıldınız:")
+				notify("You got kicked:")
 				notify(JSON.parse(reason))
 			}, 500)
 		},
 		disconnect: ({ reason }) => {
 			setTimeout(() => {
-				notify("Sunucudan atıldınız:")
+				notify("You got disconnected:")
 				notify(JSON.parse(reason))
 			}, 500)
 		},
@@ -152,6 +154,7 @@ let chat = {
 	global: false,
 };
 
+/** A SongPlayer from nmp-player. Plays songs for users. */
 let songPlayer = new SongPlayer();
 songPlayer._note = function(packet){
 	packet.x = clientPosition.x * 8;
@@ -164,21 +167,21 @@ songPlayer._note = function(packet){
 songPlayer.on("stop", () => {
 	notify({
 		text: "",
-		extra: [new Msg("[P] ", "aqua"), new Msg("Müzik durduruldu.", "gray")],
+		extra: [new Msg("[P] ", "aqua"), new Msg("Music stopped.", "gray")],
 	});
 	songPlayerBossBar.setTitle({
 		text: "",
-		extra: [new Msg("♬", "dark_gray"), " Durduruldu - ", new Msg((songPlayer.song.title), "gold")],
+		extra: [new Msg("♬", "dark_gray"), " Stopped - ", new Msg((songPlayer.song.title), "gold")],
 	});
 });
 songPlayer.on("end", () => {
 	notify({
 		text: "",
-		extra: [new Msg("[P] ", "aqua"), new Msg("Müzik bitti.", "gray")],
+		extra: [new Msg("[P] ", "aqua"), new Msg("Music ended.", "gray")],
 	});
 	songPlayerBossBar.setTitle({
 		text: "",
-		extra: [new Msg("♬", "dark_gray"), " Müzik bitti - ", new Msg((songPlayer.song.title), "gold")],
+		extra: [new Msg("♬", "dark_gray"), " Finished - ", new Msg((songPlayer.song.title), "gold")],
 	});
 	
 	let t = songPlayer.tick;
@@ -217,7 +220,10 @@ async function createTxt(id, data){
 
 
 
-
+/**
+	Boot function group
+	@example boot("updates") // check for updates
+*/
 function boot(part, other){
 	let crlf = (s) => s.replace(/\n/g, "\r\n");
 	async function checkUpdates(type){
@@ -229,33 +235,33 @@ function boot(part, other){
 			if(type == "update") return json.updateSource;
 			
 			if(json.version != version) {
-				let prefix = chalk.cyan("[Güncelleme]")+" ";
-				console.log(prefix+chalk.gray("Yeni bir sürüm detekt edildi. Lütfen güncelleyiniz :3"));
-				console.log(prefix+chalk.gray("Sürümünüz:    ")+chalk.redBright(version));
-				console.log(prefix+chalk.gray("Yeni Sürüm:   ")+chalk.greenBright(json.version));
+				let prefix = chalk.cyan("[Update]")+" ";
+				console.log(prefix+chalk.gray("A new version has been detected. Please update :3"));
+				console.log(prefix+chalk.gray("Your version:  ")+chalk.redBright(version));
+				console.log(prefix+chalk.gray("New version:   ")+chalk.greenBright(json.version));
 			};
 			return json.version == version; // returns bool:upToDate
 		} catch(err){
 			if(type == "cfg") return "# default config load error - "+e.toString();
-			console.log(chalk.cyan("[Güncelleme] - Hata!: ")+err.toString());
-			notify("[Güncelleme] - Hata!: "+err.toString());
-			console.log("Ya internetiniz kapalı yada glitch sitesinde hata var.");
-			notify("Ya internetiniz kapalı yada glitch sitesinde hata var.");
+			console.log(chalk.cyan("[Update] - Error!: ")+err.toString());
+			notify("[Update] - Error!: "+err.toString());
+			console.log("Either your internet is down or the servers are down.");
+			notify("Either your internet is down or the servers are down.");
 			return true;
 		};
 	};
 	
 	
-	async function updateSelf(){
+	async function updateSelf(){ // incomplete
 		const src = await checkUpdates("update");
 		const res = await fetch(src);
-		const fStream = fs.createWriteStream("./PlasmaClient_yeni.zip");
+		const fStream = fs.createWriteStream("./PlasmaClient_new.zip");
 		res.body.pipe(fStream);
 		res.body.on("error", (err) => {
-			console.log("Güncelleme | Hata!: "+err.toString());
+			console.log("Update | Error!: "+err.toString());
 		});
 		fStream.on("finish", function() {
-			console.log("Güncelleme | İndirildi, zipten çıkartılıyor...");
+			console.log("Update | Downloaded, extracting from zip...");
 			
 		});
 	};
@@ -289,19 +295,19 @@ function boot(part, other){
 					let sv = sp[0];
 					let nick = sp[1];
 					let pass = sp[2];
-					if(!sv || !nick || !pass) throw new Error("Şifre yanlış yazılmış");
+					if(!sv || !nick || !pass) throw new Error("password typed incorrect");
 					if(!password_list[sv]) password_list[sv] = {};
 					password_list[sv][nick] = pass;
 				} catch(e){
-					console.log("[Plasma] passwords.txt - hata: "+e.toString());
+					console.log("[Plasma] passwords.txt - error: "+e.toString());
 				};
 			});
 		} else {
 			fs.writeFileSync("./passwords.txt", crlf("# ✧ Plasma Client\n"+
-			"# Otomatik /login şifre deposu.\n"+
-			"# Buraya şifrelerini yazarsan Plasma otomatik login yapmaya çalışacaktır.\n"+
-			"# Yazılış: 'ip:nick:şifre'\n\n\n"));
-			log("passwords.txt oluşturuldu.");
+			"# Automatic /login database.\n"+
+			"# If you type passwords in here plasma will try to login with it.\n"+
+			"# Syntax: 'ip:nick:password'\n\n\n"));
+			log("passwords.txt created.");
 		};
 	};
 	
@@ -316,12 +322,12 @@ function boot(part, other){
 					if(!sp[1]) sp[1] = "true";
 					config[sp[0]] = (sp[1] == "true" || sp[1] == "false" ? Boolean(sp[1]) : (isNaN(sp[1]) ? sp[1] : Number(sp[1]) ));
 				} catch(e){
-					console.log("[Plasma] config.txt - hata: "+e.toString());
+					console.log("[Plasma] config.txt - error: "+e.toString());
 				};
 			});
 		} else {
 			fs.writeFileSync("./config.txt", crlf(await checkUpdates("cfg")));
-			log("config oluşturuldu");
+			log("config created");
 			return await boot("config");
 		};
 	};
@@ -337,15 +343,15 @@ function boot(part, other){
 					const fileStream = fs.createWriteStream("./songs/"+song.filename+".nbs");
 					res.body.pipe(fileStream);
 					res.body.on("error", (err) => {
-						console.log("Örnek müzik indirme hatası: "+err.toString());
+						console.log("Default song download error: "+err.toString());
 					});
 					fileStream.on("finish", function() {
-						console.log("Örnek müzik indirildi: "+song.filename);
+						console.log("Default song downloaded: "+song.filename);
 					});
 				});
 			} catch(e){
 				if(!fs.existsSync("./songs")) fs.mkdirSync("./songs");
-				log("Örnek şarkılar indirilemedi!");
+				log("Default songs couldn't be downloaded!");
 				console.log(e);
 			};
 		};
@@ -353,9 +359,9 @@ function boot(part, other){
 	
 	async function loadPlugins(){
 		if(!fs.existsSync("./plasma_plugins.txt")) {
-			let txt = "# Plasma Client Plugin Listesi\n";
-			txt += "# Bilgi: https://plasma-client.glitch.me/plugins.html \n";
-			txt += "# Plugin eklemek için dosya adını aşağıya yazın. Her satır bir dosya adıdır\n";
+			let txt = "# Plasma Client Plugin List\n";
+			txt += "# Info: https://plasma-client.glitch.me/plugins.html \n";
+			txt += "# Every line is a file name that will try to be require()'d\n";
 			fs.writeFileSync("./plasma_plugins.txt", crlf(txt));
 		};
 		
@@ -366,12 +372,12 @@ function boot(part, other){
 				let exp = require(pluginPath);
 				let f = typeof exp == "function" ? exp : exp.plasma;
 				let p = f(getPlasmaAPI());
-				log("Plugin yüklendi: "+(p && p.name ? p.name : pluginPath));
+				log("Plugin could not be loaded: "+(p && p.name ? p.name : pluginPath));
 			} catch(e) {
 				if(e.code == "MODULE_NOT_FOUND") {
-					console.log(chalk.red("[PluginError]")+chalk.gray(" Plugin bulunamadı: ")+pluginPath);
+					console.log(chalk.red("[PluginError]")+chalk.gray(" Plugin not found: ")+pluginPath);
 				} else {
-					console.log(chalk.red("[PluginError]")+" Plugin hata verdi:", e);
+					console.log(chalk.red("[PluginError]")+" Plugin gave an error:", e);
 				};
 			};
 		});
@@ -454,7 +460,7 @@ database.load = function(){
 	try {
 		json = JSON.parse(data);
 	} catch(e){
-		console.log("ERROR | plasma_db.json BOZUK - ya siliniz yada düzeltiniz!");
+		console.log("ERROR | plasma_db.json CORRUPTED - please delete or fix!");
 	};
 	this._data = json;
 };
@@ -483,7 +489,7 @@ function tokens(str) {
 };
 
 if(require.main !== module && !global.Pirate) {
-	console.log(chalk.red("[Plasma]")+" require() detekt edildi. Pluginler için lütfen plugin sistemini kullanınız");
+	console.log(chalk.red("[Plasma]")+" require() detected. plz use plugin system for stuff :c");
 	process.exit();
 };
 
@@ -562,7 +568,7 @@ const server = mc.createServer({
 	'online-mode': false,
 	port: process.env.PLASMA_PORT || 25565,
 	version: "1.12.2",
-	motd: "--- Plasma Client ---\nSürüm: v"+version,
+	motd: "--- Plasma Client ---\Version: v"+version,
 	'max-players': 1,
 });
 
@@ -574,7 +580,7 @@ server.on("error", function (error) {
 
 server.on("listening", function () {
 	let port = server.socketServer.address().port;
-	console.log(chalk.cyan("[Plasma]")+chalk.gray(" Hazır! ")+chalk.white("localhost:"+port)+chalk.gray(" adresi ile Plasma'yı kullanabilirsiniz."));
+	console.log(chalk.cyan("[Plasma]")+chalk.gray(" Ready! Login to ")+chalk.white("localhost:"+port)+chalk.gray(" to use Plasma."));
 });
 
 
@@ -609,8 +615,8 @@ server.on("login", function(client){
 	wChat(client, [{text:"Saat/Tarih: ",color:"gray"},{text:new Date(Date.now()).toLocaleString(),color:"aqua"}]);
 	if(_client) {
 		bind(client);
-		notify(">>> Bağlantıya devam ediliyor...");
-		notify("'"+Prefix+"dc' komutu ile bağlantıyı kesebilirsiniz.");
+		notify(">>> Countiniuing with session...");
+		notify("You can disconnect via the '"+Prefix+"dc' command.");
 	} else {
 		serverSelector(client);
 	};
@@ -646,32 +652,39 @@ function serverSelector(client, cb){
 		if(ip == thisIP) continue;
 		wChat(client, [{text: "- ["}, 
 			new Msg(ip, "aqua", null, ip).hover([
+				new Msg("Connect to ", "white"),
 				new Msg('"'+name+'"', "aqua"),
-				new Msg(" sunucusuna bağlan", "white"), new Msg("\nIP: ", "gold"), new Msg(ip, "white")
+				new Msg("\nIP: ", "gold"), new Msg(ip, "white")
 			]),
 			{text: "]"},
 		]);
 	};
 	if(direct_connect && direct_connect != thisIP) wChat(client, [
 		{text:"> ["},
-			new Msg("direkt bağlan", "green", null, direct_connect).hover([
-				new Msg("En son bağlandığın sunucuya bağlan:", "white"), new Msg("\n"), new Msg(direct_connect, "gold")
+			new Msg("direct connect", "green", null, direct_connect).hover([
+				new Msg("Connect to the last direct connect IP:", "white"),
+				new Msg("\n"),
+				new Msg(direct_connect, "gold")
 			]),
 		{text:"]"}
 	]);
 	wChat(client, " ");
 	wChat(client, "Alternatif olarak IP adresini sohbete yazın.");
 	wChat(client, [
-		new Msg(" [✧ Yenile] ", "gold", new Msg("Sunucu listesini yeniler\nEğer listede hiçbir sunucu gözükmüyorsa tıklayın.", "gray"), "_REFRESH"),
-		new Msg(" [✧ Güncelle] ", "dark_purple", new Msg("Güncellemelere bakar.", "gray"), "_UPDATES"),
-		new Msg(" [✧ Nick Değiştir] ", "blue", new Msg("Nickini değiştirir", "gray"), "_NICK"),
-		new Msg(" [✧ Prefixi Değiştir] ", "gray", new Msg("Plasma Prefixini değiştirir.\nBu buton yakında config ile yer değişecek.", "gray"), "_PREFIX"),
+		new Msg(" [✧ Refresh] ", "gold", 
+			new Msg("Refreshes the server list\nIf no server is listed click this button.", "gray"), "_REFRESH"),
+		new Msg(" [✧ Update] ", "dark_purple",
+			new Msg("Check for updates.", "gray"), "_UPDATES"),
+		new Msg(" [✧ Change Nick] ", "blue",
+			new Msg("Changes nick", "gray"), "_NICK"),
+		new Msg(" [✧ Change Prefix] ", "gray",
+			new Msg("Changes the command prefix.\Will be changed via a config command in the future.", "gray"), "_PREFIX"),
 	]);
 	if(currentUsername) wChat(client, [
-		new Msg(" (i) ", "green"), new Msg("Şuan nickiniz ", "gray"), new Msg(currentUsername, "gold"), new Msg(".", "gray"),
+		new Msg(" (i) ", "green"), new Msg("Your nick is currently ", "gray"), new Msg(currentUsername, "gold"), new Msg(".", "gray"),
 	]);
 	wChat(client, " ");
-	wChat(client, [{text:"-".repeat(10)+"\\"}, {text:"Sunucu Seçin.",color:"dark_aqua"}, {text:"/"+"-".repeat(10),color:"white"}, ]);
+	wChat(client, [{text:"-".repeat(10)+"\\"}, {text:"Select Server.",color:"dark_aqua"}, {text:"/"+"-".repeat(10),color:"white"}, ]);
 	
 	let menu = function({ message }){
 		let ip = message;
@@ -679,15 +692,15 @@ function serverSelector(client, cb){
 			if(ip == "_REFRESH") {
 				client.removeListener("chat", menu);
 				serverSelector(client, function(){
-					notify("> Liste yenilendi!");
+					notify("> List refreshed!");
 				});
 			};
 			if(ip == "_UPDATES") {
 				boot("updates").then(function(latest){
 					if(latest) {
-						notify("> Plasma'nın son sürümünü kullanıyorsunuz.");
+						notify("> You are using the latest version.");
 					} else {
-						notify("> Yeni bir sürüm var. Konsola bakın!");
+						notify("> A new version has been released. Look in the console!");
 					};
 				});
 			};
@@ -702,20 +715,20 @@ function serverSelector(client, cb){
 						return !(nick.split("").filter(c => allowed.includes(c)).length === nick.length);
 					};
 					if(checkNick()){
-						wChat(client, [new Msg("[Nick] ", "blue"), new Msg("Hatalı nick. Yeniden girin:", "gray")]);
+						wChat(client, [new Msg("[Nick] ", "blue"), new Msg("Illegal nick, try again:", "gray")]);
 						return;
 					};
 					currentUsername = nick;
 					client.removeListener("chat", listener);
 					serverSelector(client, function(){
-						wChat(client, [new Msg("[Nick] ", "blue"), new Msg("Nick ayarlandı.", "gray")]);
+						wChat(client, [new Msg("[Nick] ", "blue"), new Msg("Nick changed.", "gray")]);
 					});
 					if(socket && socket.connected) {
 						socket.emit("changeNick", nick);
 					};
 				};
 				client.on("chat", listener);
-				wChat(client, [new Msg("[Nick] ", "blue"), new Msg("Lütfen nicki yazın:", "gray")]);
+				wChat(client, [new Msg("[Nick] ", "blue"), new Msg("Type your nick:", "gray")]);
 			};
 			if(ip == "_PREFIX") {
 				client.removeListener("chat", menu);
@@ -725,15 +738,15 @@ function serverSelector(client, cb){
 					Prefix = pfx;
 					client.removeListener("chat", listener);
 					serverSelector(client, function(){
-						wChat(client, [new Msg("[Prefix] ", "dark_gray"), new Msg("Prefix değiştirildi. (Plasma kapatılana kadar)", "gray")]);
+						wChat(client, [new Msg("[Prefix] ", "dark_gray"), new Msg("Prefix changed. (until plasma is restarted)", "gray")]);
 					});
 				};
 				client.on("chat", listener);
-				wChat(client, [new Msg("[Prefix] ", "dark_gray"), new Msg("Yeni prefixi yazın:", "gray")]);
+				wChat(client, [new Msg("[Prefix] ", "dark_gray"), new Msg("Type new prefix:", "gray")]);
 			};
 		} else {
 			client.removeListener("chat", menu);
-			notify(">>> Bağlanılıyor...");
+			notify(">>> Connecting...");
 			createProxy(client, { host: ip.split(":")[0], port:ip.split(":")[1] || 25565, version: "1.12.2", });
 		};
 	};
@@ -775,14 +788,14 @@ function wChat(cli, c){
 
 let debug_messagePacket = false;
 function createProxy(client, opts){
-	console.log(chalk.cyan("[Plasma] ")+chalk.gray("Sunucuya bağlanılıyor -> ")+opts.host+":"+opts.port);
+	console.log(chalk.cyan("[Plasma] ")+chalk.gray("Connecting to -> ")+opts.host+":"+opts.port);
 	if(!opts.username) opts.username = currentUsername || client.username;
 	
 	_client = mc.createClient(opts);
 	
 	bind(client);
 	
-	if(socket && socket.connected) socket.emit("joinServer", opts.host) // bazı sunuculara özel roomlara katılmak için WS'ye sunucuya girdiğini bildir
+	if(socket && socket.connected) socket.emit("joinServer", opts.host) // to connect to secret rooms notify the ws
 	connectedServer = opts.host;
 	
 	_client.on("login", function(){
@@ -832,7 +845,7 @@ function createProxy(client, opts){
 					};
 					a.hoverEvent = {
 						action: "show_text",
-						value: [new Msg("[Plasma] ", "dark_aqua"), new Msg("Hızlı mesaj: Tıkla!", "gray")],
+						value: [new Msg("[Plasma] ", "dark_aqua"), new Msg("Fast message: Click", "gray")],
 					};
 				};
 				return a;
@@ -909,28 +922,28 @@ function buttonify(a, indx, all){
 	
 	if(a.text.trim().startsWith("copy:")) {
 		all.splice(indx+1, 0, new Msg(" (✄)", (a.color == "aqua" ? "dark_aqua" : "aqua"), [
-			p, new Msg("Tıkla ve kopyala", "gray")
+			p, new Msg("Click and copy", "gray")
 		], ".copy "+a.text.trim().replace("copy:", "")));
 	};
 	if(a.text.trim().startsWith("yt:")) {
 		let link = "https://www.youtube.com/watch?v="+a.text.trim().replace("yt:", "").slice(0, 11);
 		let j = new Msg(" (►)", (a.color == "red" ? "dark_red" : "red"), [
-			p, new Msg("Youtube linkine git", "gray")
+			p, new Msg("Go to the youtube video", "gray")
 		], link);
 		all.splice(indx+1, 0, j);
 	};
 	if(a.text.trim().startsWith("pinterest:")) {
 		let link = "https://in.pinterest.com/pin/"+a.text.trim().replace("pinterest:", "").slice(0, 11);
 		let j = new Msg(" (☟)", (a.color == "red" ? "dark_red" : "red"), [
-			p, new Msg("Pinterest pinine git", "gray")
+			p, new Msg("Go to the pinterest pin", "gray")
 		], link);
 		all.splice(indx+1, 0, j);
 	};
 	if(a.text.trim().startsWith("namemc:")) {
 		let nick = a.text.trim().replace("namemc:", "").split(" ")[0];
 		let link = "https://namemc.com/profile/"+nick;
-		let j = new Msg(" (ⓝ)", (a.color == "dark_gray" ? "gray" : "dark_gray"), [p, new Msg("NameMC profilini aç", "gray")], link);
-		let k = new Msg(" (☄)", (a.color == "gray" ? "dark_gray" : "gray"), [p, new Msg("Skin olarak ayarla", "gray")], null, "/skin set "+nick);
+		let j = new Msg(" (ⓝ)", (a.color == "dark_gray" ? "gray" : "dark_gray"), [p, new Msg("Open the NameMC profile", "gray")], link);
+		let k = new Msg(" (☄)", (a.color == "gray" ? "dark_gray" : "gray"), [p, new Msg("Set as skin", "gray")], null, "/skin set "+nick);
 		all.splice(indx+2, 0, k);
 		all.splice(indx+1, 0, j);
 	};
@@ -938,8 +951,8 @@ function buttonify(a, indx, all){
 		let id = a.text.trim().replace("skin:", "").split(" ")[0];
 		let link = "https://namemc.com/skin/"+id;
 		let linkpng = "https://namemc.com/texture/"+id+".png?v=2";
-		let j = new Msg(" (✿)", (a.color == "blue" ? "dark_blue" : "blue"), [p, new Msg("NameMC skinini aç", "gray")], link);
-		let k = new Msg(" (☄)", (a.color == "green" ? "dark_green" : "green"), [p, new Msg("Skini indir", "gray")], linkpng);
+		let j = new Msg(" (✿)", (a.color == "blue" ? "dark_blue" : "blue"), [p, new Msg("Open the NameMC skin", "gray")], link);
+		let k = new Msg(" (☄)", (a.color == "green" ? "dark_green" : "green"), [p, new Msg("Download the skin", "gray")], linkpng);
 		all.splice(indx+2, 0, k);
 		all.splice(indx+1, 0, j);
 	};
@@ -947,15 +960,15 @@ function buttonify(a, indx, all){
 		let id = a.text.trim().replace("novaskin:", "").split(" ")[0];
 		let link = "https://minecraft.novaskin.me/skin/"+id;
 		let linkpng = "http://novask.in/"+id+".png";
-		let j = new Msg(" (✿)", (a.color == "blue" ? "dark_blue" : "blue"), [p, new Msg("Novaskin'i aç", "gray")], link);
-		let k = new Msg(" (☄)", (a.color == "green" ? "dark_green" : "green"), [p, new Msg("Skini ayarla", "gray")], null, "/skin set "+linkpng);
+		let j = new Msg(" (✿)", (a.color == "blue" ? "dark_blue" : "blue"), [p, new Msg("Open the Novaskin", "gray")], link);
+		let k = new Msg(" (☄)", (a.color == "green" ? "dark_green" : "green"), [p, new Msg("Set as skin", "gray")], null, "/skin set "+linkpng);
 		all.splice(indx+2, 0, k);
 		all.splice(indx+1, 0, j);
 	};
 	if(a.text.trim().startsWith("ngws:")) {
 		let text = a.text.trim().replace("ngws:", "").split(" ")[0];
 		let host = "https://"+text+".ngrok.io/";
-		let j = new Msg(" (✧)", (a.color == "gold" ? "yellow" : "gold"), [p, new Msg("Sunucuya bağlan", "gray")], ".wss "+host);
+		let j = new Msg(" (✧)", (a.color == "gold" ? "yellow" : "gold"), [p, new Msg("Connect to WS", "gray")], ".wss "+host);
 		all.splice(indx+1, 0, j);
 	};
 	
@@ -993,14 +1006,14 @@ function bind(client){
 	
 	_client.on("end", function(){
 		serverSelector(client, function(){
-			notify("> Bağlantı kesildi.");
+			notify("> Disconnected.");
 		});
 		_client = null;
 		connectedServer = null;
 	});
 	
 	_client.on("error", function(err){
-		wChat(client, [{text:"[Plasma] ",color:"dark_aqua"},{text:"/!\\ Hata: ",color:"red"},{text:err.toString(),color:"gray"}]);
+		wChat(client, [{text:"[Plasma] ",color:"dark_aqua"},{text:"/!\\ Error: ",color:"red"},{text:err.toString(),color:"gray"}]);
 	});
 };
 
@@ -1246,7 +1259,17 @@ class NPC {
 
 
 let elevatorList = {};
+
 class Floor {
+	/**
+	* Represents a floor for an elevator
+	* @constructor
+	* @param {object} [opts]
+	* @param {number} opts.y - world coordinate
+	* @param {string} opts.title - title of the floor, ex: "Cafeteria"
+	* @param {number} opts.index - index of the floor, doesnt have to be anything its just for display.
+	* @param {string} opts.msg - subtitle message override
+	*/
 	constructor(opts={}){
 		this.y = opts.y || 64;
 		this.title = opts.title || null;
@@ -1255,8 +1278,8 @@ class Floor {
 	};
 	makeMsg(){
 		if(this.msg) return this.msg;
-		if(this.index===undefined) return [new Msg("Kata gelindi.", "gray")];
-		let m = [new Msg("Kat ", "gray"), new Msg(this.index+"", "dark_aqua")];
+		if(this.index===undefined) return [new Msg("f l o o r.", "gray")]; // easter egg kekw -den
+		let m = [new Msg("Floor ", "gray"), new Msg(this.index+"", "dark_aqua")];
 		if(this.title) m.push(new Msg(": ", "gray"), new Msg(this.title, "blue"));
 		return m;
 	};
@@ -1264,6 +1287,8 @@ class Floor {
 
 let thicc;
 function elevTest(){
+	
+	/* RIP LegendCraft server, you will be missed by dennis. */
 	
 	let floors = [
 		{
@@ -1293,6 +1318,10 @@ function elevTest(){
 	return thicc;
 };
 
+/**
+* Makes minecraft screen title subtitle for you
+* @param {string} m - the subtitle text
+*/
 function makeSubtitle(m){
 	writeAll("title", {
 		action: 1,
@@ -1336,11 +1365,21 @@ class ThickElevator {
 
 
 class BossBar {
+	/**
+	* A BossBar:tm:
+	* @param {object} opts
+	* @param {UUID} opts.UUID
+	* @param {number} opts.color
+	* @param {string} opts.title
+	* @param {number} opts.health - progress bar é (between one and zero, more breaks the mc client's renderer lul)
+	* @param {boolean} silent - if true will not send the packet on init
+	* @example new BossBar({ title: "pogness of null and reis", health: 3 });
+	*/
 	constructor(opts){
 		this.loaded = false;
 		this.UUID = opts.UUID || UUIDS.v1();
 		this.color = opts.color || 1;
-		this.title = opts.title || [new Msg("[Plasma] İsimsiz BossBar", "dark_aqua")];
+		this.title = opts.title || [new Msg("[Plasma] Unnamed BossBar", "dark_aqua")];
 		this.health = opts.health || 1;
 		if(!opts.silent) this.sendPacket();
 	};
@@ -1366,6 +1405,7 @@ class BossBar {
 			this.loaded = true;
 		};
 	};
+	/** Sets title */
 	setTitle(title=this.title){
 		this.title = title;
 		//let calcHealth = () => percentage(this.currentFloor + (this.busy ? 0.5 : 0), this.floors.length-1) / 100;
@@ -1379,9 +1419,11 @@ class BossBar {
 			this.sendPacket();
 		};
 	};
+	/** Sets percentage */
 	setPercentage(part, full){
 		this.sendPacket(percentage(part, full)/100);
 	};
+	/** unloads/hides the bossbar */
 	unload(){
 		if(!this.loaded) return;
 		writeAll("boss_bar", {
@@ -1395,12 +1437,32 @@ class BossBar {
 // needed to be on top but bruh'd
 const songPlayerBossBar = new BossBar({
 	silent: true,
-	title: ["Şuan Müzik Çalmıyor"],
+	title: ["There isnt any music playing right now"],
 	health: 0,
 });
 
 
 class Elevator {
+	/**
+	* Elevator class
+	* an elevator consists of two boat entities, one is the floor and the other is the ceiling
+	* to go up, the client recieves levitation effect so they rise up, and because the levitation speed is inconsistent (0.9 blocks/s smh) the
+	* ceiling boat stops the player from going up too much.
+	* - The elevator position is counted as the floor boat entity
+	* @constructor
+	* @param {object} opts
+	* @param {object} opts.bossbar - custom bossbar properties
+	* @param {number} opts.entityId
+	* @param {number} opts.ceilId - entity id for the ceil boat entity
+	* @param {number} opts.height - in blocks
+	* @param {number} opts.x
+	* @param {number} opts.y
+	* @param {number} opts.z
+	* @param {number} opts.currentFloor
+	* @param {Floor[]} opts.floors - mandatory
+	* @param {boolean} opts.canUnpress - can you unpress a button from the queue
+	* @param {number} opts.stopTime - how long in ms will the elevator wait before going to the next requested floor?
+	*/
 	constructor(opts = {}){
 		this.UUID = UUIDS.v1();
 		this.ceilUUID = UUIDS.v1();
@@ -1443,6 +1505,11 @@ class Elevator {
 		this.qDirection = "none";
 		elevatorList[this.entityId] = this;
 	};
+	
+	/**
+	* Is the client near the elevator?
+	* @returns {boolean}
+	*/
 	isNear(){
 		return (Math.abs(this.x - clientPosition.x) < 2 && Math.abs(this.z - clientPosition.z) < 2);
 	};
@@ -1544,15 +1611,20 @@ class Elevator {
 		this.qDirection = (this.floors[floor].y > this.y ? "up" : "down");
 		this.goToFloor(floor);
 	};*/
+	
+	
+	/**
+	* Send the buttons
+	*/
 	sendControls(){
 		
 		if(this.lastControl !== undefined && this.lastControl + 1000 > Date.now()) return;
 		this.lastControl = Date.now();
 		let list = [];
 		
-		this.floors.forEach((function(floor, i){
+		this.floors.forEach((floor, i) => {
 			let pressed = this.floorQueue.has(i);
-			let hover = (floor.title || "Kat "+(floor.index !== undefined ? floor.index : i));
+			let hover = (floor.title || "Floor "+(floor.index !== undefined ? floor.index : i));
 			let cmd = ".elevator press "+this.entityId+" "+i;
 			list.push(
 				new Msg(
@@ -1569,17 +1641,17 @@ class Elevator {
 				),
 				new Msg(
 					") ",
-					floor.buttonColor || (pressed ? "dark_green" : "dark_gray"),
+					floor.buttonColor || (pressed ? "dark_green" : "dark_gray"), // buttonColor needs fix in floor class -den
 					hover,
 					cmd,
 				)
 			);
-		}).bind(this));
+		});
 		
 		notify({
 			text: "",
 			extra: [
-				new Msg("[Plasma:Asansör] ", "dark_aqua"),
+				new Msg("[P:Elevator] ", "dark_aqua"),
 				...list,
 			],
 		});
@@ -1649,6 +1721,7 @@ class Elevator {
 		this.y += pos;
 		this.sendPacket();
 	};
+	/** Go to a floor :p */
 	goToFloor(n){
 		if(!this.floors[n]) return;
 		if(this.currentFloor == n) return;
@@ -1762,36 +1835,36 @@ function bindCommands(client){
 				
 				if(["kategori", "category", "categories", "kategoriler"].includes(cname.toLowerCase())) return wChat(client, {
 					text: "",
-					extra: [p, new Msg("Kategoriler: ", "blue"), Array.from(CommandCategories.keys()).join(", ")],
+					extra: [p, new Msg("Categories: ", "blue"), Array.from(CommandCategories.keys()).join(", ")],
 				});
 				
 				if(Commands.has(cname)) {
 					let c = Commands.get(cname);
 					wChat(client, {text:"",
 						extra: [
-							p, new Msg("Komut: ", "blue"), c.name, "\n",
-							p, (c.aliases ? new Msg("Alternatif isimler: ", "blue") : ""), (c.aliases ? "'"+c.aliases.join("', '")+"'" : ""), "\n",
-							p, (c.desc ? new Msg("Açıklama: ", "blue") : ""), (c.desc ? c.desc : ""), "\n",
-							p, (c.category ? new Msg("Kategori: ", "blue") : ""), (c.category ? c.category : ""), "\n",
-							p, (c.usage ? new Msg("Kullanım: ", "blue") : ""), (c.usage ? Prefix + c.usage : ""), "\n",
+							p, new Msg("Command: ", "blue"), c.name, "\n",
+							p, (c.aliases ? new Msg("Aliases: ", "blue") : ""), (c.aliases ? "'"+c.aliases.join("', '")+"'" : ""), "\n",
+							p, (c.desc ? new Msg("Desc.: ", "blue") : ""), (c.desc ? c.desc : ""), "\n",
+							p, (c.category ? new Msg("Category: ", "blue") : ""), (c.category ? c.category : ""), "\n",
+							p, (c.usage ? new Msg("Usage: ", "blue") : ""), (c.usage ? Prefix + c.usage : ""), "\n",
 						],
 					});
 				} else if(CommandCategories.has(cname)) {
 					wChat(client, {
 						text: "",
 						extra: [
-							p, cname, new Msg(" kategorisindeki komutlar: ", "blue"), CommandCategories.get(cname).join(", "),
+							p, cname, new Msg(" commands: ", "blue"), CommandCategories.get(cname).join(", "),
 						],
 					});
 				} else {
-					wChat(client, [p, cname, new Msg(" komutu yada kategorisi bulunamadı.", "gray")]);
+					wChat(client, [p, cname, new Msg(" command or category not found.", "gray")]);
 				};
 			} else {
 				wChat(client, {text:"",
 				extra:[
-						p, new Msg("Komutlar:\n", "blue"),
+						p, new Msg("Commands:\n", "blue"),
 						Array.from(Commands.keys()).filter(name => !Commands.get(name).isAlias).join(", "), "\n",
-						p, new Msg("Komut bilgisi için ", "blue"), ".help <komut/kategori>",
+						p, new Msg("For command info ", "blue"), ".help <cmd/category>",
 					],
 				});
 			};
@@ -1810,12 +1883,12 @@ function bindCommands(client){
 	addCommand({
 		name: "copy",
 		aliases: ["kopyala"],
-		desc: "Girdiğiniz yazıyı kopyalar.",
+		desc: "Copies text.",
 		category: "util",
 		usage: "copy <Yazı>",
 		run: (args) => {
 			let text = args.join(" ").trim();
-			if(0 == text.length) return notify("Kullanım: .copy <yazı>");
+			if(0 == text.length) return notify("Usage: .copy <text>");
 			clip.writeSync(text);
 		},
 	});
