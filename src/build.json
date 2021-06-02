@@ -1,0 +1,16 @@
+{
+	"version": "1.2.0",
+	"dependencies": [
+		"minecraft-protocol",
+		"chalk",
+		"prismarine-chat",
+		"prismarine-nbt",
+		"node-fetch", 
+		"clipboardy",
+		"nmp-player",
+		"uuid",
+		"socket.io-client",
+		"nbs.js",
+		"adm-zip"
+	]
+}
