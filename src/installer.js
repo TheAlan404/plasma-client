@@ -32,7 +32,7 @@ function checkNodeVersion(){
 };
 
 function checkDepencencies(){
-	if(fs.existsSync())
+	//if(fs.existsSync())
 	for(let dep of dependencies) {
 		require.resolve(dep);
 	};

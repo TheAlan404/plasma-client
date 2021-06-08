@@ -1,0 +1,32 @@
+{
+  "name": "plasma-client",
+  "version": "1.2.0",
+  "description": "readme in progress",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TheAlan404/plasma-client.git"
+  },
+  "author": "alan404",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TheAlan404/plasma-client/issues"
+  },
+  "homepage": "https://github.com/TheAlan404/plasma-client#readme",
+  "dependencies": {
+    "adm-zip": "^0.5.5",
+    "chalk": "^4.1.1",
+    "clipboardy": "^2.3.0",
+    "minecraft-protocol": "^1.25.0",
+    "nbs.js": "^1.0.1",
+    "nmp-player": "^1.1.0",
+    "node-fetch": "^2.6.1",
+    "prismarine-chat": "^1.0.3",
+    "prismarine-nbt": "^1.5.0",
+    "socket.io-client": "^4.1.2",
+    "uuid": "^8.3.2"
+  }
+}

@@ -5,4 +5,4 @@ const temp_meta = {
 };
 require("./installer.js")(temp_meta);
 const PlasmaClient = require("./plasmaclient.js");
-plasma.proxy = new PlasmaClient(process.env.PLASMA_PORT);
+const Plasma = new PlasmaClient();

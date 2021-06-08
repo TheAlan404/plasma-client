@@ -1,34 +1,50 @@
 /* Plasma Client */
-const mc = require("minecraft-protocol");
 const { EventEmitter } = require("events");
 const { Proxy } = require("./proxy.js");
 const { version } = require("./build.json");
+const { ConfigTypeMap } = require("./utils/constants.js");
+
+const SimpleDB = require("./classes/SimpleDB.js");
+const ConfigHelper = require("./classes/ConfigHelper.js");
+
+const createServer = require("./utils/server.js");
 const sendLogin = require("./utils/login.js");
+const clientBootstrap = require("./utils/clientBootstrap.js");
+const mainMenu = require("./utils/MainMenu.js");
 
 module.exports = class PlasmaClient extends EventEmitter {
-	constructor(PORT = 25565){
-		this.createServer(PORT);
+	constructor(port){
+		super();
+		this.version = version;
+		this.db = new SimpleDB("./userdb.json");
+		this.config = new ConfigHelper(this.db._data, ConfigTypeMap);
+		this.config.save = () => {
+			this.db.set("config", this.config.data);
+			this.db.save();
+		};
+		
+		this.server = createServer(this, port);
 		this.proxy = new Proxy(this);
 	};
 	handleError(err){
 		console.log(chalk.brightRed(err.toString()));
 	};
-	createServer(port){
-		let opts = {
-			"online-mode": false,
-			version: "1.12.2",
-			motd: `Plasma Client\nversion ${version}`,
-			port,
-		};
-		
-		this.server = mc.createServer(opts);
-		server.on("error", this.handleError.bind(this));
-		server.on("login", this.handleLogin.bind(this));
-		server.on("listening", () => {
-			console.log(chalk.cyan("[Plasma]")+chalk.gray(" Ready! Login to ")+chalk.white("localhost:"+port)+chalk.gray(" to use Plasma."));
-		});
-	};
 	handleLogin(client){
-		sendLogin(client);
+		clientBootstrap(this, client);
+		sendLogin(this, client);
+		if(this.proxy.canRebind) {
+			this.proxy.bind(client);
+		} else {
+			mainMenu.init(this, client);
+		};
+	};
+	write(name, data){
+		for(let i in this.server.clients){
+			try {
+				this.server.clients[i].write(name, data);
+			} catch(e){
+				this.handleError(e);
+			};
+		};
 	};
 };

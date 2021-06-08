@@ -15,8 +15,14 @@ class Proxy {
 			recieve: new Map(),
 			recieveAll: true,
 		};
+		this.targetClient = null;
+		this.targetClients = new Map();
 	};
-	
+	connect(client, opts = {}){
+		// TODO: finish
+		const { host = "localhost", port = 25565, username = client.username } = opts;
+		
+	};
 };
 
 module.exports = {

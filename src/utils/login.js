@@ -1,5 +1,10 @@
 /* Plasma Client */
 
+/*
+-- Note @ dennis ---
+Why does this even exist again? ITS JUST 2 PACKETSS
+*/
+
 module.exports = (plasma, client) => {
 	client.write('login', {
 		entityId: plasma.clientEntityId ?? 0,
@@ -7,7 +12,7 @@ module.exports = (plasma, client) => {
 		gameMode: 0,
 		dimension: 0,
 		difficulty: 2,
-		maxPlayers: server.maxPlayers,
+		maxPlayers: 1,
 		reducedDebugInfo: false
 	});
 	client.write('position', {
