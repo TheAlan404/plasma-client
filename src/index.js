@@ -1,8 +1,14 @@
 /* Plasma Client | Main File */
 
-const temp_meta = {
-	startTime: Date.now(),
+async function main() {
+	const temp_meta = {
+		startTime: Date.now(),
+	};
+	require("./installer.js")(temp_meta);
+	const { checkUpdate } = require("./updater.js");
+	await checkUpdate();
+	const PlasmaClient = require("./plasmaclient.js");
+	const Plasma = new PlasmaClient();
 };
-require("./installer.js")(temp_meta);
-const PlasmaClient = require("./plasmaclient.js");
-const Plasma = new PlasmaClient();
+
+main();

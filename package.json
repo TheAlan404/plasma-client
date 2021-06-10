@@ -18,6 +18,7 @@
   "homepage": "https://github.com/TheAlan404/plasma-client#readme",
   "dependencies": {
     "adm-zip": "^0.5.5",
+    "asar": "^3.0.3",
     "chalk": "^4.1.1",
     "clipboardy": "^2.3.0",
     "minecraft-protocol": "^1.25.0",

@@ -11,6 +11,7 @@
 		"uuid",
 		"socket.io-client",
 		"nbs.js",
-		"adm-zip"
+		"adm-zip",
+		"asar"
 	]
 }

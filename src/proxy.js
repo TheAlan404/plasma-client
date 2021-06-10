@@ -17,11 +17,15 @@ class Proxy {
 		};
 		this.targetClient = null;
 		this.targetClients = new Map();
+		this.nick = null;
 	};
 	connect(client, opts = {}){
 		// TODO: finish
-		const { host = "localhost", port = 25565, username = client.username } = opts;
+		const { host = "localhost", port = 25565, username = (this.nick || client.username) } = opts;
 		
+	};
+	setNick(username){
+		this.nick = username;
 	};
 };
 
