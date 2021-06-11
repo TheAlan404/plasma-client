@@ -1,4 +1,5 @@
 /* Plasma Client | ChatListener */
+const { on } = require("events");
 
 class ChatListener {
 	/**
@@ -34,20 +35,36 @@ class ChatListener {
 		this.client.on("chat", this._callback.bind(this));
 	};
 	_callback({ message }){
+		// For some reason it breaks so im using this instead of `this._end()`
+		let end = () => this.client.removeListener(this._callback);
+		
 		if(this.command && this.command.length && message.startsWith(this.command)) {
-			let cmd = message.replace(this.command);
+			let cmd = message.replace(this.command, "");
 			if(!this.commands[cmd]) return;
 			this.commands[cmd](...this.commandArgs);
 		} else {
 			if(this.cb(message, ...this.commandArgs)) {
-				this._end();
+				console.log(this);
+				//end(); // Fucking hell doesnt want to work ;w;
 				return;
 			};
 		};
-		if(this.endfilter(message)) this._end();
+		if(this.endfilter(message)) end();
 	};
 	_end(){
 		this.client.removeListener(this._callback);
+	};
+	
+	
+	static async prompt(client, filter = () => true){
+		let shouldWait = true;
+		let endFunc = () => {
+			shouldWait = false;
+		};
+		client.once("end", endFunc);
+		while(shouldWait) {
+			
+		};
 	};
 };
 

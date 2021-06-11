@@ -52,11 +52,11 @@ const mainMenuCommands = {
 	OWO: (plasma, client) => client.chat(new Msg(" UwU ", "dark_aqua")),
 };
 
-function init(plasma, client, cb){
-	let div = "-".repeat(10);
+function init(plasma, client, cb = () => null){
+	let div = "-".repeat(15);
 	let main = new TextMenu({
-		header: [new Msg(div+"/"), new Msg("Plasma Client", "dark_aqua"), new Msg("\\"+div, "white")],
-		footer: "",
+		header: [new Msg(div+"/"), new Msg("Plasma Client", "dark_aqua"), new Msg("\\"+div, "white"), "\n"],
+		footer: ["\n", new Msg(div+"\\"), new Msg("Select Server", "gold"), new Msg("/"+div, "white")],
 		contents: [
 			new ButtonList([...removeCurrent(plasma, server_list).map(({ name, ip }) => 
 				new Msg(ip, "aqua", [
