@@ -27,7 +27,7 @@ module.exports = class PlasmaClient extends EventEmitter {
 		this.server = createServer(this, port);
 		this.proxy = new Proxy(this);
 		
-		if(process.argv.includes("-con") || process.argv.includes("--console")) consoleChat(plasma);
+		if(process.argv.includes("-con") || process.argv.includes("--console")) consoleChat(this);
 	};
 	handleError(err){
 		console.log(chalk.brightRed(err.toString()));
