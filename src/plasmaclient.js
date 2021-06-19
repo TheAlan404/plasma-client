@@ -11,6 +11,7 @@ const createServer = require("./utils/server.js");
 const sendLogin = require("./utils/login.js");
 const clientBootstrap = require("./utils/clientBootstrap.js");
 const mainMenu = require("./utils/MainMenu.js");
+const consoleChat = require("./utils/consoleChat.js");
 
 module.exports = class PlasmaClient extends EventEmitter {
 	constructor(port){
@@ -25,6 +26,8 @@ module.exports = class PlasmaClient extends EventEmitter {
 		
 		this.server = createServer(this, port);
 		this.proxy = new Proxy(this);
+		
+		if(process.argv.includes("-con") || process.argv.includes("--console")) consoleChat(plasma);
 	};
 	handleError(err){
 		console.log(chalk.brightRed(err.toString()));
