@@ -55,6 +55,6 @@ function buildString(jsonstr){
 	if(comp.italic) current = chalk.italic(current);
 	if(comp.underlined) current = chalk.underline(current);
 	if(comp.bold) current = chalk.bold(current);
-	if(comp.color && colorConvert[comp.color]) current = colorConvert[comp.color](current);
+	if(comp.color && colorConvert[comp.color]) current = chalk[colorConvert[comp.color] || "white"](current);
 	return current + (Array.isArray(comp.extra) ? comp.extra.map(obj => buildString(JSON.stringify(obj))).join("") : "");
 };
