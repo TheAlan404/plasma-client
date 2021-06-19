@@ -3,6 +3,7 @@ const { createClient } = require("minecraft-protocol");
 const chalk = require("chalk");
 
 module.exports = (plasma) => {
+	plasma.localIP = process.argv[3] // fix later ;3
 	plasma.chatclient = createClient({
 		username: "console",
 		host: plasma.localIP.split(":")[0],
