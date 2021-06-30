@@ -4,11 +4,28 @@ const mc = require("minecraft-protocol");
 const illegalPackets = ["keep_alive", "login"];
 const mainFilter = (client, target, data, meta) => !illegalPackets.includes(meta.name) && !([meta.state, client.state, target.state].filter(x => x !== "play").length);
 
-/**
-* @typedef {function|boolean} ProxyFilterItem
-* If it is a function, return an object for transforming the packet.
-* If you dont return an object, it will function the same as putting `true` - which doesnt proxy the packet
-*/
+class ProxyFilter {
+	/**
+	* Defines a filter item for Proxy
+	* @param {Object} data
+	* @param {"DENY"|"MODIFY"|"READ"} data.type - default "DENY"
+	* @param {function} data.filter
+	* if type is READ, the filter doesnt affect the packet handling
+	* if type is DENY, filter should return `true` to accually deny the packet.
+	* if type is MODIFY, filter should return the modified packet. filter can also return `false` to deny the packet.
+	* default DENY function always returns true
+	* default MODIFY function returns the same packet data
+	* @example new ProxyFilter({ type: "DENY" });
+	* @example new ProxyFilter({ type: "MODIFY", filter: (data) => {
+	* 	data.y = 0;
+	* 	return data;
+	* }});
+	*/
+	constructor(data = {}){
+		this.type = data.type || "DENY";
+		this.filter = data.filter || (this.type == "DENY" ? (() => true) : (_=>_));
+	};
+};
 
 class Proxy {
 	constructor(plasma){
