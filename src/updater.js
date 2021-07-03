@@ -3,6 +3,7 @@ const fs = require("fs");
 const fetch = require("node-fetch");
 const asar = require("asar");
 const { on } = require("events");
+const { execSync } = require("child_process");
 
 let { updateURL = "https://raw.githubusercontent.com/TheAlan404/plasma-static/main/version.json", version } = require("./build.json");
 let pendingUpdate = false;
@@ -10,6 +11,10 @@ let newVersion = version;
 let installURL = null;
 
 async function checkUpdate(){
+	if(checkGit()) {
+		execSync("git pull");
+		return { pendingUpdate };
+	};
 	try {
 		let res = await fetch(updateURL);
 		let json = await res.json();
@@ -38,6 +43,10 @@ async function downloadUpdate(url = installURL, progressCB = (n) => console.log(
 	res.body.pipe(file);
 	await on(file, "finish");
 	return "./UpdateFile.asar";
+};
+
+function checkGit(){
+	return fs.existsSync("./.git");
 };
 
 function unpackUpdate(file = "./UpdateFile.asar"){
