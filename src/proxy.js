@@ -1,7 +1,7 @@
 /* Plasma Client | Proxy */
 
 const mc = require("minecraft-protocol");
-const illegalPackets = ["keep_alive", "login"];
+const illegalPackets = ["keep_alive", "login", "success"];
 const mainFilter = (client, target, data, meta) => !illegalPackets.includes(meta.name) && !([meta.state, client.state, target.state].filter(x => x !== "play").length);
 
 class ProxyFilter {
@@ -27,6 +27,16 @@ class ProxyFilter {
 	};
 	
 	/**
+	* Stringifies a filter
+	* @param {string} route - 'send'|'recieve'
+	* @param {string} name - packet name
+	* @param {ProxyFilter} filter 
+	*/
+	static toString(route, name, filter){
+		return `Filter<${route}:${name}>(${filter.type})`; /// @example 'Filter<send:chat>(DENY)'
+	};
+	
+	/**
 	* Returns a DENY filter
 	* @param {function} [filter] - optional
 	* @returns {ProxyFilter}
@@ -46,8 +56,8 @@ class ProxyFilter {
 	* @example plasma.proxy.addFilter("recieve", "chat", ProxyFilter.read()); // Log all incoming chat packets
 	*/
 	static read(fn){
-	    fn = fn ?? ((data) => {
-	        console.log("[ProxyFilter => Read]", data);
+	    fn = typeof fn === "function" ? fn : ((data) => {
+	        console.log(`[ProxyFilter => Read${typeof fn === "string" ? ` / ${fn}` : ""}]`, data);
 	    });
 	    return new ProxyFilter({
 	        type: "READ",
@@ -88,6 +98,7 @@ class Proxy {
 	};
 	connect(client, opts = {}){
 		const { host = "localhost", port = 25565, username = (this.nick || client.username) } = opts;
+		console.log(`[Proxy] Connecting to '${host}${port === 25565 ? "" : `:${port}`}' with username '${username}'...`);
 		let target = this.createClient({ host, port, username }, true);
 
 		client._proxycb = (data, meta) => this._pass.bind(this)(client, target, data, meta);
@@ -100,9 +111,11 @@ class Proxy {
 		this.nick = username;
 	};
 	createClient(opts = {}, setAsCurrent = true, detached = false){
+		opts.version = opts.version ?? "1.12.2";
 		let client = mc.createClient(opts);
 		let id = this.targetClients.size;
 		client.proxyid = id;
+		client.on("login", () => console.log(`[Proxy] client(${id}) is logged in`));
 		if(!detached) this.targetClients.set(id, client);
 		if(setAsCurrent) this.targetClient = client;
 		return client;
@@ -128,11 +141,12 @@ class Proxy {
 	    this.filter[route].get(name).push(filter);
 	};
 	_pass(client, target, data, meta){
-		if(mainFilter(client, target, data, meta)) return;
+		if(!mainFilter(client, target, data, meta)) return;
 		let route = client.isServer ? "send" : "recieve";
 		if(this.filter[route+"All"] === false) return;
 	    let { modified, shouldSend } = this._filterCheck(client, target, data, meta, route);
 		if(shouldSend) target.write(meta.name, modified || data);
+		//console.log("_pass:", route, meta.name, data);
 	};
 	_filterCheck(client, target, data, meta, route){
 	    let shouldSend = true;

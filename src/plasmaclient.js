@@ -1,6 +1,6 @@
 /* Plasma Client */
 const { EventEmitter } = require("events");
-const { Proxy } = require("./proxy.js");
+const { Proxy, ProxyFilter } = require("./proxy.js");
 const { version } = require("./build.json");
 const { ConfigTypeMap } = require("./utils/constants.js");
 
@@ -26,6 +26,8 @@ module.exports = class PlasmaClient extends EventEmitter {
 		
 		this.server = createServer(this, port);
 		this.proxy = new Proxy(this);
+		
+		this.proxy.addFilter("r.open_window", ProxyFilter.read())
 		
 		if(process.argv.includes("-con") || process.argv.includes("--console")) consoleChat(this);
 	};

@@ -117,9 +117,12 @@ function init(plasma, client, cb = () => null){
 	        let stop = mainMenuCommands[cmd](plasma, client);
 	        if(!stop && !(stop instanceof Promise)) getInput();
 	    } else {
+			let h = message.split(":")[0];
+			let p = message.split(":")[1] ?? 25565;
+			client.chat([new Msg("[P] ", "dark_aqua"), new Msg(`Connecting to '${h}${p === 25565 ? "" : `:${p}`}'${!plasma.proxy.nick ? "" : ` with username '${plasma.proxy.nick}'`}...`, "gray")]);
 	        plasma.proxy.connect(client, {
-	            host: message.split(":")[0],
-	            port: message.split(":")[1] ?? 25565,
+	            host: h,
+	            port: p,
 	        });
 	    };
 	};
