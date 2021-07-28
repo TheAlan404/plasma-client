@@ -24,6 +24,7 @@ class ProxyFilter {
 	constructor(data = {}){
 		this.type = data.type || "DENY";
 		this.filter = data.filter || (this.type == "DENY" ? (() => true) : (_=>_));
+		this.label = data.label ?? null;
 	};
 	
 	/**

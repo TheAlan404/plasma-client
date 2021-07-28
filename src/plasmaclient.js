@@ -6,6 +6,7 @@ const { ConfigTypeMap } = require("./utils/constants.js");
 
 const SimpleDB = require("./classes/SimpleDB.js");
 const ConfigHelper = require("./classes/ConfigHelper.js");
+const { CommandHandler } = require("./commands/Handler.js");
 
 const createServer = require("./utils/server.js");
 const sendLogin = require("./utils/login.js");
@@ -26,8 +27,7 @@ module.exports = class PlasmaClient extends EventEmitter {
 		
 		this.server = createServer(this, port);
 		this.proxy = new Proxy(this);
-		
-		this.proxy.addFilter("r.open_window", ProxyFilter.read())
+		this.cmdHandler = new CommandHandler(this);
 		
 		if(process.argv.includes("-con") || process.argv.includes("--console")) consoleChat(this);
 	};

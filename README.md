@@ -17,3 +17,11 @@ readme in progress
 - [ ] (music) import music module
 - [ ] (music) add replaying
 - [ ] (music) add loop modes
+
+# Contributors Needed
+...because dennis fucking sucks at coding shit
+
+- [ ] [This config helper thing which handles type check shit](./src/classes/ConfigHelper.js)
+- [ ] [This chat listener thing which is the worst api ever](./src/classes/ChatListener.js)
+
+accually you can contribute to any file, its really appreciated!

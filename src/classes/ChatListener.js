@@ -16,8 +16,8 @@ class ChatListener {
 	* @param {function} opts.endfilter
 	*/
 	constructor(client, opts = {}){
-		throw new Error("ChatListener broke, use static prompt() instead");
-		const { command, commands = {}, commandArgs = [], cb = () => null, endfilter = () => false, } = opts;
+		throw new Error("ChatListener broke, use `static prompt()` instead");
+		/*const { command, commands = {}, commandArgs = [], cb = () => null, endfilter = () => false, } = opts;
 		this.command = command;
 		this.commands = commands;
 		this.commandArgs = commandArgs;
@@ -25,7 +25,7 @@ class ChatListener {
 		this.endfilter = endfilter;
 		
 		this.client = client;
-		this._start();
+		this._start();*/
 	};
 	/*
 	end(){
