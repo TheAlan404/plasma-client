@@ -16,6 +16,7 @@ class ChatListener {
 	* @param {function} opts.endfilter
 	*/
 	constructor(client, opts = {}){
+		throw new Error("ChatListener broke, use static prompt() instead");
 		const { command, commands = {}, commandArgs = [], cb = () => null, endfilter = () => false, } = opts;
 		this.command = command;
 		this.commands = commands;
@@ -26,7 +27,7 @@ class ChatListener {
 		this.client = client;
 		this._start();
 	};
-	
+	/*
 	end(){
 		this._end();
 	};
@@ -44,8 +45,8 @@ class ChatListener {
 			this.commands[cmd](...this.commandArgs);
 		} else {
 			if(this.cb(message, ...this.commandArgs)) {
-				console.log(this);
-				//end(); // Fucking hell doesnt want to work ;w;
+				//console.log(this);
+				end(); // Fucking hell doesnt want to work ;w;
 				return;
 			};
 		};
@@ -53,18 +54,18 @@ class ChatListener {
 	};
 	_end(){
 		this.client.removeListener(this._callback);
-	};
+	};*/
 	
 	
-	static async prompt(client, filter = () => true){
-		let shouldWait = true;
-		let endFunc = () => {
-			shouldWait = false;
-		};
-		client.once("end", endFunc);
-		while(shouldWait) {
-			
-		};
+	static prompt(client, filter = () => true){
+		return new Promise((res, rej) => {
+		    let listener = ({ message }) => {
+		        if(!filter(message)) return;
+		        client.off("chat", listener);
+		        res(message);
+		    };
+		    client.on("chat", listener);
+		});
 	};
 };
 
