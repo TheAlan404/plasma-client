@@ -2,8 +2,8 @@
 const { TextMenu, ButtonRow, ButtonList } = require("../classes/TextMenu.js");
 const ChatListener = require("../classes/ChatListener.js");
 const Msg = require("../classes/Msg.js");
-const { validateNick } = require("./utils.js");
-const { server_list, direct_connect } = require("./localserverlist.js")();
+const { validateNick } = require("../utils/utils.js");
+const { server_list, direct_connect } = require("../utils/localserverlist.js")();
 const { pendingUpdate, newVersion } = require("../updater.js");
 
 // the worst code ive ever written idk
@@ -22,34 +22,34 @@ const mainMenuCommands = {
 	INSTALLUPDATE: (plasma, client) => {
 		
 	},
-	NICK: (plasma, client) => {
-		let prompt = new ChatListener(client, {
-			cb(nick){
-				if(nick == "cancel") {
-					init(plasma, client, () => client.chat(new Msg("> Cancelled", "gray")));
-					return true;
-				};
-				if(nick == "reset") {
-					plasma.proxy.setNick("");
-					init(plasma, client, () => client.chat(new Msg("> Nick has been reset", "gray")));
-					return true;
-				};
+	NICK: async (plasma, client) => {
+		let notExit = true;
+		while(notExit){
+			let nick = await ChatListener.prompt(client);
+			if(nick == "cancel") {
+				init(plasma, client, () => client.chat(new Msg("> Cancelled", "gray")));
+				return true;
+			};
+			if(nick == "reset" || nick === client.username) {
+				plasma.proxy.setNick("");
+				init(plasma, client, () => client.chat(new Msg("> Nick has been reset", "gray")));
+				return true;
+			};
 				
-				let valid = validateNick(nick);
-				if(valid) {
-					plasma.proxy.setNick(nick);
-					init(plasma, client, () => client.chat(new Msg("> Nick has been set", "gray")));
-					return true;
-				} else {
-					client.chat([new Msg(" (!) ", "red"), new Msg("Invalid nick, try again (type 'cancel' to cancel, 'reset' to reset):")]);
-				};
-			},
-		});
+			let valid = validateNick(nick);
+			if(valid) {
+				plasma.proxy.setNick(nick);
+				init(plasma, client, () => client.chat(new Msg("> Nick has been set", "gray")));
+				return true;
+			} else {
+				client.chat([new Msg(" (!) ", "red"), new Msg("Invalid nick, try again (type 'cancel' to cancel, 'reset' to reset):")]);
+			};
+		};
 		return true;
 	},
 	PREFIX: (plasma, client) => {},
 	CONFIG: (plasma, client) => {},
-	OWO: (plasma, client) => client.chat(new Msg(" UwU ", "dark_aqua")),
+	OWO: (plasma, client) => client.chat(new Msg("~ UwU ~", "dark_aqua")),
 };
 
 function init(plasma, client, cb = () => null){
@@ -100,23 +100,35 @@ function init(plasma, client, cb = () => null){
 					new Msg("Configure general settings for Plasma", "gray"),
 				"#CONFIG"),
 			]),
+			...(plasma.consoleMode ? [
+			    new Msg(" (i) ", "green"),
+			    new Msg("Console mode is on. Type the IP address to connect. Use '#' to access main menu buttons", "gray"),
+			] : []),
 		],
 	});
 	main.send(client);
-	let listener = new ChatListener(client, {
-		command: "#",
-		commands: mainMenuCommands,
-		commandArgs: [plasma, client],
-		cb: (ip) => {
-			plasma.proxy.connect(client, { host: ip.split(":")[0], port:ip.split(":")[1] || 25565, });
-			return true;
-		},
-	});
+	let getInput = async () => {
+	    let message = await ChatListener.prompt(client);
+	    if(message.startsWith("#")) {
+	        let cmd = message.split(" ")[0].slice(1).toUpperCase();
+	        if(!mainMenuCommands[cmd]) {
+	            return;
+	        };
+	        let stop = mainMenuCommands[cmd](plasma, client);
+	        if(!stop && !(stop instanceof Promise)) getInput();
+	    } else {
+	        plasma.proxy.connect(client, {
+	            host: message.split(":")[0],
+	            port: message.split(":")[1] ?? 25565,
+	        });
+	    };
+	};
 	// TODO: Attach chat message listener
 	// TODO: Api for chat menus
 	// TODO: init proxy
 	// TODO: config menu
 	cb();
+	getInput();
 };
 
 function removeCurrent(plasma, server_list){
