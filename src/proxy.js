@@ -108,9 +108,20 @@ class Proxy {
 		target._proxycb = (data, meta) => this._pass.bind(this)(target, client, data, meta);
 		target.on("packet", target._proxycb);
 	};
+	/**
+	* Set the nick of the proxy
+	* @param {string} username
+	*/
 	setNick(username){
 		this.nick = username;
 	};
+	
+	/**
+	* Create a new client
+	* @param {object} opts - mc protocol createClient options
+	* @param {boolean} [setAsCurrent=true] - sets this client as the current one
+	* @param {boolean} [detached=false] - if true, dont save the client to proxy.targetClients
+	*/
 	createClient(opts = {}, setAsCurrent = true, detached = false){
 		opts.version = opts.version ?? "1.12.2";
 		let client = mc.createClient(opts);
@@ -121,6 +132,7 @@ class Proxy {
 		if(setAsCurrent) this.targetClient = client;
 		return client;
 	};
+	
 	/**
 	* Add a filter to the proxy.
 	* @param {"send"|"recieve"} route - the first letter is also accepted
@@ -141,13 +153,14 @@ class Proxy {
 	    if(!this.filter[route].has(name)) this.filter[route].set(name, []);
 	    this.filter[route].get(name).push(filter);
 	};
+	
+	// Private/Internal Methods
 	_pass(client, target, data, meta){
 		if(!mainFilter(client, target, data, meta)) return;
 		let route = client.isServer ? "send" : "recieve";
 		if(this.filter[route+"All"] === false) return;
 	    let { modified, shouldSend } = this._filterCheck(client, target, data, meta, route);
 		if(shouldSend) target.write(meta.name, modified || data);
-		//console.log("_pass:", route, meta.name, data);
 	};
 	_filterCheck(client, target, data, meta, route){
 	    let shouldSend = true;

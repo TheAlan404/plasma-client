@@ -47,7 +47,7 @@ try {
 	"clipboardy", "nmp-player", "uuid", "socket.io-client", "nbs.js", "adm-zip"];
 	console.log("--- Plasma Client Install ---");
 	console.log("> Installing... (or updating)");
-	let txt = cproc.execSync("npm install "+deps.join(" "));
+	let txt = "funny" //cproc.execSync("npm install "+deps.join(" "));
 	console.log("> Install complete! Starting...");
 };
 
@@ -2401,7 +2401,7 @@ function bindCommands(client){
 	
 	addCommand({
 		name: "dlvjson",
-		run: (args) => {
+		run: async (args) => {
 			if(!args[1]) return notify("Geçersiz komut argümanları");
 			const res = await fetch(args[1]);
 			const fileStream = fs.createWriteStream("./"+(args[2] || "video_"+Math.floor(Math.random() * 1000000000)));
