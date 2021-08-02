@@ -9,7 +9,8 @@ const ContentRenderers = {
 		client.chat(new ButtonRow(content.list, { border: content.border }).toText());
 	},
 	buttonlist: (client, content) => {
-		client.chat(new ButtonRow(content.list, { border: content.border }).toText());
+		let components = new ButtonList(content.list, { border: content.border }).toText();
+		components.forEach((comp) => client.chat(comp));
 	},
 };
 
@@ -78,7 +79,7 @@ class ButtonList {
 	* @param {string[]} [opts.border] - border for the buttons
 	*/
 	constructor(list, opts = {}){
-		const { border = ["> [", "]\n"] } = opts;
+		const { border = ["> [", "]"] } = opts;
 		this.list = Array.isArray(list) ? list : ButtonRow.parseString(list);
 		this.border = border;
 		this.type = "buttonlist";
@@ -86,10 +87,7 @@ class ButtonList {
 	toText(){
 		let text = [];
 		for(let msg of this.list){
-			text.push(this.border[0]);
-			text.push(msg);
-			text.push(this.border[1]);
-			text.push("\n");
+			text.push([this.border[0], msg, this.border[1]]);
 		};
 		return text;
 	};

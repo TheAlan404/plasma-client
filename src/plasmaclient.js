@@ -11,7 +11,7 @@ const { CommandHandler } = require("./commands/Handler.js");
 const createServer = require("./utils/server.js");
 const sendLogin = require("./utils/login.js");
 const clientBootstrap = require("./utils/clientBootstrap.js");
-const mainMenu = require("./utils/MainMenu.js");
+const mainMenu = require("./UI/MainMenu.js");
 const consoleChat = require("./utils/consoleChat.js");
 
 module.exports = class PlasmaClient extends EventEmitter {

@@ -50,6 +50,14 @@ const mainMenuCommands = {
 	PREFIX: (plasma, client) => {},
 	CONFIG: (plasma, client) => {},
 	OWO: (plasma, client) => client.chat(new Msg("~ UwU ~", "dark_aqua")),
+	LIST: (plasma, client) => {
+		client.chat([
+			new Msg(" (i) ", "green"),
+			new Msg("Available main menu commands:\n", "gray"),
+			// eslint-disable-next-line
+			new Msg("     " + Object.keys(mainMenuCommands).map(cmd => `#${cmd}`).join("\n")),
+		]);
+	},
 };
 
 function init(plasma, client, cb = () => null){
@@ -65,6 +73,7 @@ function init(plasma, client, cb = () => null){
 					new Msg("\nIP: ", "gold"), new Msg(ip, "white")
 				], ip)
 			)]),
+			"\n",
 			...((direct_connect.length && direct_connect != plasma.localIP) ? [
 				new Msg("- [direct connect]\n", "green", [
 					new Msg("Connect to the last direct connect IP:", "white"),
@@ -102,13 +111,14 @@ function init(plasma, client, cb = () => null){
 			]),
 			...(plasma.consoleMode ? [
 			    new Msg(" (i) ", "green"),
-			    new Msg("Console mode is on. Type the IP address to connect. Use '#' to access main menu buttons", "gray"),
+			    new Msg("Console mode is on.\n     Type the IP address to connect.\n     Type '#LIST' for main menu commands", "gray"),
 			] : []),
 		],
 	});
 	main.send(client);
 	let getInput = async () => {
 	    let message = await ChatListener.prompt(client);
+		if(message[0] === ".") return;
 	    if(message.startsWith("#")) {
 	        let cmd = message.split(" ")[0].slice(1).toUpperCase();
 	        if(!mainMenuCommands[cmd]) {
