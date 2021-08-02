@@ -52,4 +52,13 @@ module.exports = class PlasmaClient extends EventEmitter {
 			};
 		};
 	};
+	chat(comp){
+		for(let i in this.server.clients){
+			try {
+				this.server.clients[i].chat(comp);
+			} catch(e){
+				this.handleError(e);
+			};
+		};
+	};
 };
