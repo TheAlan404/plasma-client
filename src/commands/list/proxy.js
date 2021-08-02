@@ -1,28 +1,33 @@
-const { ProxyFiler } ??
+const { ProxyFilter } = require("../../proxy.js");
 const { Command, SubcommandGroup } = require("../Handler");
 const Msg = require("../../classes/Msg.js");
 
 const P = new Msg("[P] ", "dark_aqua");
 const MEDAL_ALERT = [new Msg("(", "dark_red"), new Msg("!", "red"), new Msg(") ", "dark_red")];
+const FILTER_TYPE_COLORS = {
+	READ: "green",
+	MODIFY: "blue",
+	DENY: "red",
+};
 
 module.exports = function(handler){
 	handler.addCommand(new Command({
-		name: "ping",
+		name: "proxy",
 		desc: "Example Command",
 		category: "proxy",
 		run: new SubcommandGroup({
 			filter: new SubcommandGroup({
 				list: (args, plasma) => {
 					let components = [];
-					let SEP = new Msg(":");
+					let SEP = new Msg(":", "white");
 					
-					components.push([P, new Msg("--- Send Filters ---", "gray")]);
-					if(!plasma.filter.sendAll) components.push([P, ...MEDAL_ALERT, new Msg("SendAll is OFF")]);
-					if(plasma.filter.send.size) {
-						plasma.filter.send.forEach((list = [], name = "") => {
+					components.push([P, new Msg("--- Send Filters ---", "dark_gray")]);
+					if(!plasma.proxy.filter.sendAll) components.push([P, ...MEDAL_ALERT, new Msg("SendAll is OFF")]);
+					if(plasma.proxy.filter.send.size) {
+						plasma.proxy.filter.send.forEach((list = [], name = "") => {
 							list.forEach(filter => {
-								let comp = [P, new Msg(name, "gray"), SEP, filter.type];
-								if(filter.label) comp.push(new Msg(";'" + filter.label + "'"));
+								let comp = [P, new Msg(name, "gray"), SEP, new Msg(filter.type, FILTER_TYPE_COLORS[filter.type])];
+								if(filter.label) comp.push(new Msg(" => ", "white"), new Msg("'" + filter.label + "'"));
 								components.push(comp);
 							});
 						});
@@ -30,13 +35,13 @@ module.exports = function(handler){
 						components.push([P, new Msg("There isnt any 'send' filters.", "gray")]);
 					};
 					
-					components.push([P, new Msg("--- Recieve Filters ---", "gray")]);
-					if(!plasma.filter.recieveAll) components.push([P, ...MEDAL_ALERT, new Msg("RecieveAll is OFF")]);
-					if(plasma.filter.recieve.size) {
-						plasma.filter.recieve.forEach((list = [], name = "") => {
+					components.push([P, new Msg("--- Recieve Filters ---", "dark_gray")]);
+					if(!plasma.proxy.filter.recieveAll) components.push([P, ...MEDAL_ALERT, new Msg("RecieveAll is OFF")]);
+					if(plasma.proxy.filter.recieve.size) {
+						plasma.proxy.filter.recieve.forEach((list = [], name = "") => {
 							list.forEach(filter => {
-								let comp = [P, new Msg(name, "gray"), SEP, filter.type];
-								if(filter.label) comp.push(new Msg(";'" + filter.label + "'"));
+								let comp = [P, new Msg(name, "gray"), SEP, new Msg(filter.type, FILTER_TYPE_COLORS[filter.type])];
+								if(filter.label) comp.push(new Msg(" => ", "white"), new Msg("'" + filter.label + "'"));
 								components.push(comp);
 							});
 						});
@@ -51,15 +56,15 @@ module.exports = function(handler){
 					let route = args[3][0] == "s" ? "send" : (args[3][0] == "r" ? "recieve" : "ERROR");
 					if(route == "ERROR") return plasma.chat([P, new Msg("Route must be present! Example: 'send.position'", "gray")]);
 					switch(args[4][0].toLowerCase()) {
-						"r":
+						case "r":
 							try {
-								plasma.proxy.addFilter(args[3], ProxyFiler.read());
+								plasma.proxy.addFilter(args[3], ProxyFilter.read());
 							} catch(e) {
 								plasma.chat([P, MEDAL_ALERT, new Msg("Error: " + e.toString(), "dark_gray")]);
 							};
 							plasma.chat([P, new Msg("Read filter added.", "gray")]);
 							break;
-						"m":
+						case "m":
 							if(!args[5]) return plasma.chat([P, MEDAL_ALERT, new Msg("A JS function must be present for the modify filter type!", "gray")]);
 							let fn;
 							try {
@@ -69,15 +74,15 @@ module.exports = function(handler){
 							};
 							if(typeof fn !== "function") return plasma.chat([P, MEDAL_ALERT, new Msg("Error: Input is not a function", "gray")]);
 							try {
-								plasma.proxy.addFilter(args[3], ProxyFiler.modify(fn));
+								plasma.proxy.addFilter(args[3], ProxyFilter.modify(fn));
 							} catch(e) {
 								plasma.chat([P, MEDAL_ALERT, new Msg("Error: " + e.toString(), "dark_gray")]);
 							};
 							plasma.chat([P, new Msg("Modify filter added.", "gray")]);
 							break;
-						"d":
+						case "d":
 							try {
-								plasma.proxy.addFilter(args[3], ProxyFiler.deny());
+								plasma.proxy.addFilter(args[3], ProxyFilter.deny());
 							} catch(e) {
 								return plasma.chat([P, MEDAL_ALERT, new Msg("Error: " + e.toString(), "dark_gray")]);
 							};
@@ -90,10 +95,10 @@ module.exports = function(handler){
 			}, "list"),
 		}, (arg, plasma) => {
 			if(arg) {
-				plasma.chat(P, new Msg(`Error: ${arg} is not a valid subcommand!`, "gray"));
+				plasma.chat([P, new Msg(`Error: ${arg} is not a valid subcommand!`, "gray")]);
 			} else {
-				plasma.chat(P, new Msg("Usage: .proxy <(filter|clients)>", "gray"));
+				plasma.chat([P, new Msg("Usage: .proxy <(filter|clients)>", "gray")]);
 			};
 		}),
-	});
+	}));
 };

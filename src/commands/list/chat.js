@@ -6,7 +6,7 @@ const P = new Msg("[P] ", "dark_aqua");
 
 const Tones = {
 	// tExT
-	s: (s) => s..split(" ").map(
+	s: (s) => s.split(" ").map(
 		(word) => word.split("").map(
 			(char, i) => char[i % 2 === 1 ? "toUpperCase" : "toLowerCase"]()
 		).join("")
@@ -25,10 +25,10 @@ module.exports = function(handler){
 		name: "ping",
 		desc: "Example Command",
 		category: "chat",
-		run: (plasma, args) => {
+		run: (args, plasma) => {
 			plasma.chat(new Msg("> Pong!", "gray"));
 		},
-	});
+	}));
 	
 	handler.addCommand({
 		name: "tone",

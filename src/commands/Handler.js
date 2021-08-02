@@ -1,4 +1,5 @@
 /* Plasma Client | Command Handler */
+const fs = require("fs");
 const { ProxyFilter } = require("../proxy.js");
 const getStackTrace = require("../utils/stackTrace.js");
 
@@ -13,7 +14,26 @@ class CommandHandler {
 		this.plasma.proxy.addFilter("send", "chat", new ProxyFilter({
 			type: "DENY",
 			filter: this._filter.bind(this),
+			label: "plasma commandhandler",
 		}));
+		
+		this.loadCommands();
+	};
+	loadCommands(){
+		let isInsideSrc = !fs.existsSync("./src");
+		let listPath = `./${isInsideSrc ? "" : "src/"}commands/list`;
+		let files = fs.readdirSync(listPath).filter(fn => fn.endsWith(".js"));
+		for(let fn of files){
+			try {
+				let m = require(`./list/${fn}`);
+				if(!m) throw new Error("Command file doesnt export anything!");
+				if(typeof m === "function") {
+					m(this);
+				};
+			} catch(e) {
+				this.plasma.handleError(e);
+			};
+		};
 	};
 	_filter(data){
 		if(this.isPrefixed(data.message)) {
@@ -46,11 +66,15 @@ class CommandHandler {
 				this.aliases.set(alias, cmd.name);
 			});
 		};
+		console.log(`[Commands] Registered '${cmd.name}'`);
 	};
 	async handle(str){
 		let [cmdName, cmdArgs] = this.parse(str);
 		if(!cmdName) return this.unknownCommand();
 		let cmd = this.commands.get(cmdName);
+		if(cmd.run instanceof SubcommandGroup) {
+			return cmd.run.run(cmdArgs, this.plasma, cmd);
+		};
 		let _run = typeof cmd.run === "function" ? cmd.run : (typeof cmd.run.run === "function" ? cmd.run.run : null);
 		if(!_run) throw new Error(`[CommandHandler:run] Command ${cmdName} does not have a run() function!`);
 		if(Array.isArray(cmd.middleware)) {
@@ -83,30 +107,34 @@ class CommandHandler {
 class Command {
 	constructor(name, desc, args, run, category, middleware){
 		if(typeof name === "object") return Command.from(name);
-		let { cmdname, aliases } = Command.parseName(name);
-		this.name = cmdname;
-		this.aliases = Array.isArray(aliases) ? aliases : [];
+		this.name = name;
+		this.aliases = Array.isArray(this.aliases) ? this.aliases : [];
 		this.desc = desc;
 		this.args = Array.isArray(args) ? args : [];
 		this.category = category || "Other";
 		this.run = run;
 		this.middleware = Array.isArray(middleware) ? middleware : [];
+		this.examples = [];
 	};
 	static from(data){
-		return new Command(data.name, data.desc, data.args, data.run, data.category, data.middleware);
-	};
-	static parseName(str){
-		return {
-			name: str.split(" ")[0],
-			aliases: str.split(" ").slice(1),
+		let cmd = new Command(data.name, data.desc, data.args, data.run, data.category, data.middleware);
+		for(let prop in data) {
+			if(cmd[prop] === undefined) cmd[prop] = data[prop];
 		};
+		return cmd;
+	};
+	static argToString(arg){
+		return `${arg.startsWith(':') ? '<' : '['}${arg.slice(1)}${arg.startsWith(':') ? '>' : ']'}`;
 	};
 	
 	/**
 	* Returns the usage string
 	*/
 	get usage(){
-		
+		if(this.run instanceof SubcommandGroup) {
+			return `${this.name} ${this.run.choices} [...]`;
+		};
+		return `${this.name}${this.args.length ? ' ' : ''}${this.args.map(Command.argToString).join(' ')}`;
 	};
 	
 	// Shorthand Helpers
@@ -148,28 +176,35 @@ class SubcommandGroup {
 	*/
 	constructor(subcommands, none, depth = 1){
 		this.list = {};
-		for(let subcommandArg in subcommands){
-			this.add(subcommandArg, subcommands[subcommandArg]);
+		this._depth = depth;
+		for(let sArg in subcommands){
+			this.add(sArg, subcommands[sArg]);
 		};
 		this.setNone(none);
-		this._depth = depth;
+	};
+	get choices(){
+		return `<${Object.keys(this.list).join("|")}>`;
 	};
 	add(option, fn){
-		if(fn instanceof SubcommandGroup) fn._depth = this._depth + 1;
+		if(fn instanceof SubcommandGroup) fn._depth = (this._depth + 1);
 		this.list[option] = fn;
 	};
 	setNone(fn){
 		this.none = fn ?? ((arg, plasma, cmd) => {
-			// todo..?
+			plasma.chat([new Msg("[P] ", "dark_aqua"), new Msg(cmd.usage, "gray")]);
 		});
 	};
 	run(args, plasma, cmdObj){
 		let arg = args[this._depth];
 		if(this.list[arg]) {
-			let _run = typeof this.list[arg] === "function" ? this.list[arg] : this.list[arg].run;
+			let _run = this.list[arg];
+			if(_run instanceof SubcommandGroup) {
+				return _run.run(args, plasma, cmdObj);
+			};
 			_run(args, plasma, cmdObj);
 		} else {
-			this.none(arg, plasma, cmdObj);
+			let _run = typeof this.none === "string" ? (typeof this.list[this.none] === "function" ? this.list[this.none] : this.list[this.none].run) : this.none;
+			_run(arg, plasma, cmdObj);
 		};
 	};
 };

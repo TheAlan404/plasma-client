@@ -1,9 +1,10 @@
 /* Plasma Client */
 const { EventEmitter } = require("events");
+const chalk = require("chalk");
+
 const { Proxy, ProxyFilter } = require("./proxy.js");
 const { version } = require("./build.json");
 const { ConfigTypeMap } = require("./utils/constants.js");
-
 const SimpleDB = require("./classes/SimpleDB.js");
 const ConfigHelper = require("./classes/ConfigHelper.js");
 const { CommandHandler } = require("./commands/Handler.js");
@@ -25,14 +26,14 @@ module.exports = class PlasmaClient extends EventEmitter {
 			this.db.save();
 		};
 		
-		this.server = createServer(this, port);
+		createServer(this, port);
 		this.proxy = new Proxy(this);
 		this.cmdHandler = new CommandHandler(this);
 		
 		if(process.argv.includes("-con") || process.argv.includes("--console")) consoleChat(this);
 	};
 	handleError(err){
-		console.log(chalk.brightRed(err.toString()));
+		console.log(chalk.red(err.toString()));
 	};
 	handleLogin(client){
 		clientBootstrap(this, client);

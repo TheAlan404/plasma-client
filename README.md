@@ -4,10 +4,6 @@ readme in progress
 
 # TODO
 
-**easy ones dennis will do when she gets home**
-- [ ] (cmds) finish command handler (+ add default option string as none function on SubcommandGroup)
-- [ ] (cmds) add label to the send.chat filter at command handler
-
 **other normal stuff**
 - [ ] (chore) Make readme
 - [ ] (chore) Install guide
@@ -31,5 +27,6 @@ readme in progress
 
 - [ ] [This config helper thing which handles type check shit](./src/classes/ConfigHelper.js)
 - [ ] [This chat listener thing which is the worst api ever(and is broke too)](./src/classes/ChatListener.js)
+- [ ] the [command handler](./src/commands/Handler.js) itself, its very bad pls fix
 
 accually you can contribute to any file, its really appreciated!
