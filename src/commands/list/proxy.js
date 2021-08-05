@@ -1,6 +1,6 @@
-const { ProxyFilter } = require("../../proxy.js");
-const { Command, SubcommandGroup } = require("../Handler");
-const Msg = require("../../classes/Msg.js");
+const { ProxyFilter } = require("@Proxy");
+const { Command, SubcommandGroup } = require("@Commands");
+const Msg = require("@Msg");
 
 const P = new Msg("[P] ", "dark_aqua");
 const MEDAL_ALERT = [new Msg("(", "dark_red"), new Msg("!", "red"), new Msg(") ", "dark_red")];
@@ -92,7 +92,7 @@ module.exports = function(handler){
 							plasma.chat([P, new Msg(`${args[4]} is not a proxy filter type. Available types: 'read', 'modify' and 'deny'`, "gray")]);
 					};
 				},
-			}, "list"),
+			}),
 		}, (arg, plasma) => {
 			if(arg) {
 				plasma.chat([P, new Msg(`Error: ${arg} is not a valid subcommand!`, "gray")]);

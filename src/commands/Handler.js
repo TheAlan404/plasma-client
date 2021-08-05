@@ -1,7 +1,8 @@
 /* Plasma Client | Command Handler */
 const fs = require("fs");
-const { ProxyFilter } = require("../proxy.js");
+const { ProxyFilter } = require("@Proxy");
 const getStackTrace = require("../utils/stackTrace.js");
+const Msg = require("@Msg");
 
 class CommandHandler {
 	constructor(plasma){
@@ -51,6 +52,7 @@ class CommandHandler {
 		return this.plasma.config.get("prefix") || ".";
 	};
 	addCommand(cmd){
+		if(!(cmd instanceof Command)) cmd = new Command(cmd);
 		if(!cmd.name) throw new Error("[CommandHandler:addCommand] Nameless command!");
 		if(this.commands.has(cmd.name) || this.aliases.has(cmd.name)) {
 			let caller = getStackTrace();
@@ -72,15 +74,20 @@ class CommandHandler {
 		let [cmdName, cmdArgs] = this.parse(str);
 		if(!cmdName) return this.unknownCommand();
 		let cmd = this.commands.get(cmdName);
-		if(cmd.run instanceof SubcommandGroup) {
-			return cmd.run.run(cmdArgs, this.plasma, cmd);
-		};
-		let _run = typeof cmd.run === "function" ? cmd.run : (typeof cmd.run.run === "function" ? cmd.run.run : null);
-		if(!_run) throw new Error(`[CommandHandler:run] Command ${cmdName} does not have a run() function!`);
 		if(Array.isArray(cmd.middleware)) {
 			// TODO: finish middleware handling
 		};
-		_run(cmdArgs, this.plasma, cmd);
+		if (cmd.args && cmd.args.length) {
+			const req = cmd.args.filter(a => a.startsWith(':')).length;
+			if (req > 0 && !cmdArgs[req]) return this.plasma.chat([new Msg("[P] ", "dark_aqua"), new Msg(cmd.usage, "gray")]);
+		}
+		if(!cmd.hideInput) this.plasma.chat(new Msg(`> ${str.replace(this.prefix, "")}`, "white"));
+		
+		if(cmd.run instanceof SubcommandGroup) {
+			return cmd.run.run(cmdArgs, this.plasma, cmd);
+		};
+		if(!cmd.run) throw new Error(`[CommandHandler:run] Command ${cmdName} does not have a run() function!`);
+		cmd.run(cmdArgs, this.plasma, cmd);
 	};
 	isPrefixed(str){
 		let { prefix } = this;
@@ -105,23 +112,20 @@ class CommandHandler {
 };
 
 class Command {
-	constructor(name, desc, args, run, category, middleware){
-		if(typeof name === "object") return Command.from(name);
-		this.name = name;
-		this.aliases = Array.isArray(this.aliases) ? this.aliases : [];
-		this.desc = desc;
-		this.args = Array.isArray(args) ? args : [];
-		this.category = category || "Other";
-		this.run = run;
-		this.middleware = Array.isArray(middleware) ? middleware : [];
-		this.examples = [];
-	};
-	static from(data){
-		let cmd = new Command(data.name, data.desc, data.args, data.run, data.category, data.middleware);
+	constructor(data){
+		this.name = data.name;
+		this.aliases = Array.isArray(data.aliases) ? data.aliases : [];
+		this.desc = data.desc;
+		this.args = Array.isArray(data.args) ? data.args : [];
+		this.category = data.category || "Other";
+		this.run = data.run;
+		this.middleware = Array.isArray(data.middleware) ? data.middleware : [];
+		this.examples = Array.isArray(data.examples) ? data.examples : [];
+		this.hideInput = data.hideInput ?? false;
+		
 		for(let prop in data) {
-			if(cmd[prop] === undefined) cmd[prop] = data[prop];
+			if(this[prop] === undefined) this[prop] = data[prop];
 		};
-		return cmd;
 	};
 	static argToString(arg){
 		return `${arg.startsWith(':') ? '<' : '['}${arg.slice(1)}${arg.startsWith(':') ? '>' : ']'}`;
@@ -164,15 +168,20 @@ class SubcommandGroup {
 	* check the first argument of this function to determine if the user typed an invalid subcommand
 	* 
 	* @example ```js
-	* new Command("note", "Manages your notes", [], new SubcommandGroup({
-	* 	list: () => {},
-	*	edit: () => {},
-	*	delete: () => {},
-	* }, (arg) => {
-	* 	// arg is a string
-	* 	if(arg) reply(`${arg} is not a subcommand`)
-	* 	else reply("Usage: note <list|edit|delete>");
-	* }), "personal");
+	* new Command({
+	*	name: "note",
+	*	desc: "Manages your notes",
+	*	category: "personal",
+	*	run: new SubcommandGroup({
+	*	 	list: () => {},
+	*		edit: () => {},
+	*		delete: () => {},
+	*	}, (arg) => {
+	*	 	// arg is a string
+	*	 	if(arg) reply(`${arg} is not a subcommand`)
+	*	 	else reply("Usage: note <list|edit|delete>");
+	*	}),
+	* });
 	*/
 	constructor(subcommands, none, depth = 1){
 		this.list = {};
@@ -191,7 +200,11 @@ class SubcommandGroup {
 	};
 	setNone(fn){
 		this.none = fn ?? ((arg, plasma, cmd) => {
-			plasma.chat([new Msg("[P] ", "dark_aqua"), new Msg(cmd.usage, "gray")]);
+			if(arg) {
+				plasma.chat([new Msg("[P] ", "dark_aqua"), new Msg(`Error: ${arg} is not a valid subcommand! Subcommands: ${this.choices}`, "gray")]);
+			} else {
+				plasma.chat([new Msg("[P] ", "dark_aqua"), new Msg(cmd.usage, "gray")]);
+			};
 		});
 	};
 	run(args, plasma, cmdObj){

@@ -2,12 +2,15 @@
 const { EventEmitter } = require("events");
 const chalk = require("chalk");
 
-const { Proxy, ProxyFilter } = require("./proxy.js");
+require("module-alias/register");
+const { Proxy, ProxyFilter } = require("@Proxy");
 const { version } = require("./build.json");
 const { ConfigTypeMap } = require("./utils/constants.js");
 const SimpleDB = require("./classes/SimpleDB.js");
 const ConfigHelper = require("./classes/ConfigHelper.js");
-const { CommandHandler } = require("./commands/Handler.js");
+const { CommandHandler } = require("@Commands");
+const { ChatButtonHandler } = require("@ChatButtons");
+const { MapManager } = require("@Components/MapManager");
 
 const createServer = require("./utils/server.js");
 const sendLogin = require("./utils/login.js");
@@ -29,11 +32,14 @@ module.exports = class PlasmaClient extends EventEmitter {
 		createServer(this, port);
 		this.proxy = new Proxy(this);
 		this.cmdHandler = new CommandHandler(this);
+		this.chatButtons = new ChatButtonHandler(this);
+		this.maps = new MapManager(this);
 		
 		if(process.argv.includes("-con") || process.argv.includes("--console")) consoleChat(this);
 	};
 	handleError(err){
 		console.log(chalk.red(err.toString()));
+		console.log(err.stack);
 	};
 	handleLogin(client){
 		clientBootstrap(this, client);
@@ -61,5 +67,8 @@ module.exports = class PlasmaClient extends EventEmitter {
 				this.handleError(e);
 			};
 		};
+	};
+	get client(){
+		return this.server.getFirstClient();
 	};
 };

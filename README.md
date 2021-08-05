@@ -9,6 +9,16 @@ readme in progress
 - [ ] (chore) Install guide
 - [ ] (chore) presentation/user guide
 - [ ] (core) plugins api
+- [x] (core) use module-alias
+- [ ] (core) fix package.json
+- [ ] (component) auto login
+- [x] (component) chat buttons
+- [ ] (component) fast pm
+- [ ] (component) auto tpaccept
+- [ ] (component) maps
+- [ ] (component) elevators
+- [ ] (component) npcs
+- [ ] (component) wss
 - [ ] (proxy) Entity ID swapping
 - [ ] (proxy) handle disconnects
 - [ ] (proxy+ui) list clients in main menu
@@ -18,6 +28,7 @@ readme in progress
 - [ ] (util) console chat scrollback
 - [ ] (cmds) better classes
 - [ ] (cmds) tab-completion
+- [ ] (cmds) better. usage. strings. please.
 - [ ] (music) import music module
 - [ ] (music) add replaying
 - [ ] (music) add loop modes
@@ -30,3 +41,8 @@ readme in progress
 - [ ] the [command handler](./src/commands/Handler.js) itself, its very bad pls fix
 
 accually you can contribute to any file, its really appreciated!
+
+**some symbols i copy often, please ignore**
+- ⚧
+- ♂
+- ♀
