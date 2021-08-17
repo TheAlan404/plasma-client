@@ -41,4 +41,4 @@ class ElevatorManager {
 
 
 
-module.exports = { ElevatorManager, Elevator };
+module.exports = { ElevatorManager, /*Elevator*/ };
