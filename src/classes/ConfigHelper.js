@@ -31,7 +31,10 @@ class ConfigHelper {
 	* @returns {*|null}
 	*/
 	get(key){
-		if(!this.types[key]) return this.data[key] ?? null;
+		
+		return this.data[key] ?? this.types[key].default;
+		
+		/*if(!this.types[key]) return this.data[key] ?? null;
 		if(this.data[key] === undefined) return this.types[key].default || null;
 		let test = ConfigHelper.types[this.types[key].type];
 		let [valid, value] = test(this.data[key]);
@@ -41,7 +44,7 @@ class ConfigHelper {
 			Reason: ${value || "No reason given"}`);
 			return null;
 		};
-		return value;
+		return value;*/
 	};
 	
 	/**

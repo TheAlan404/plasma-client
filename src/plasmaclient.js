@@ -11,6 +11,7 @@ const ConfigHelper = require("./classes/ConfigHelper.js");
 const { CommandHandler } = require("@Commands");
 const { ChatButtonHandler } = require("@ChatButtons");
 const { MapManager } = require("@Components/MapManager");
+const { ChatModule } = require("@Components/ChatModule");
 
 const createServer = require("./utils/server.js");
 const sendLogin = require("./utils/login.js");
@@ -31,14 +32,30 @@ module.exports = class PlasmaClient extends EventEmitter {
 		
 		createServer(this, port);
 		this.proxy = new Proxy(this);
-		this.cmdHandler = new CommandHandler(this);
-		this.chatButtons = new ChatButtonHandler(this);
-		this.maps = new MapManager(this);
+		this.loadComponents();
 		
+		this.on("error", (e) => this.handleError(e, "Plasma:Core"));
 		if(process.argv.includes("-con") || process.argv.includes("--console")) consoleChat(this);
 	};
-	handleError(err){
-		console.log(chalk.red(err.toString()));
+	loadComponents(){
+		let components = {
+			cmdHandler: CommandHandler,
+			chatButtons: ChatButtonHandler,
+			maps: MapManager,
+		};
+		
+		for(let moduleName in components){
+			try {
+				this[moduleName] = new components[moduleName](this);
+			} catch(e){
+				this.handleError(e, "Plasma:ModuleLoadInternal");
+			};
+		};
+		
+		new ChatModule(this);
+	};
+	handleError(err, source){
+		console.log(chalk.red(`[(!) ERROR] ((source=${source || "UNKNOWN"})) err.toString()`));
 		console.log(err.stack);
 	};
 	handleLogin(client){

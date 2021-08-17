@@ -127,10 +127,31 @@ class Proxy {
 		let client = mc.createClient(opts);
 		let id = this.targetClients.size;
 		client.proxyid = id;
+		// to store proxy/client data
+		client.proxy = {};
 		client.on("login", () => console.log(`[Proxy] client(${id}) is logged in`));
 		if(!detached) this.targetClients.set(id, client);
 		if(setAsCurrent) this.targetClient = client;
+		this.attachTargetListeners(client);
 		return client;
+	};
+	
+	attachTargetListeners(client){
+		client.chat = (str) => client.write("chat", { message: str });
+		
+		client.proxy.UUIDtoNick = new Map(); // Map<UUID => string>
+		client.proxy.playerList = new Set(); // Set<string>
+		client.on("player_info", (packet) => {
+			packet.data.forEach((item) => {
+				if(packet.action === 0) {
+					client.proxy.UUIDtoNick.set(item.UUID, item.name);
+					client.proxy.playerList.add(item.name);
+				};
+				if(packet.action === 4) {
+					client.proxy.playerList.delete(client.proxy.UUIDtoNick.get(item.UUID));
+				};
+			});
+		});
 	};
 	
 	/**

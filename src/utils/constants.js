@@ -7,6 +7,7 @@ const ConfigTypeMap = {
 	autoSavePasswords: { type: "bool", default: false, description: "Save /login passwords when you type them" },
 	prefix: { type: "string", default: "." },
 	nonPrefixDetection: { type: "bool", default: true, description: "If the prefix is '.', send the full message when it is '...', './give' or '._.' etc..." },
+	autotpaccept: { type: "bool", default: false, description: "Sends '/tpaccept' on TPA requests" },
 };
 
 

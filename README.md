@@ -14,13 +14,18 @@ readme in progress
 - [ ] (component) auto login
 - [x] (component) chat buttons
 - [ ] (component) fast pm
-- [ ] (component) auto tpaccept
+- [x] (component) auto tpaccept
+- [ ] (component) highlights
 - [ ] (component) maps
 - [ ] (component) elevators
 - [ ] (component) npcs
 - [ ] (component) wss
+- [ ] (feat) keep equipment on creative inventory clear
+- [ ] (proxy) client settings
+- [ ] (proxy) target client save list of players
 - [ ] (proxy) Entity ID swapping
 - [ ] (proxy) handle disconnects
+- [ ] (proxy) targetClient chat message queue (and custom queue times etc)
 - [ ] (proxy+ui) list clients in main menu
 - [ ] (ui) better classes
 - [ ] (ui) buttons API
