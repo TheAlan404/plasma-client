@@ -5,14 +5,24 @@ const asar = require("asar");
 const { on } = require("events");
 const { execSync } = require("child_process");
 
-let { updateURL = "https://raw.githubusercontent.com/TheAlan404/plasma-static/main/version.json", version } = require("./build.json");
+let {
+	updateURL = "https://raw.githubusercontent.com/TheAlan404/plasma-static/main/version.json",
+	version,
+	noGitPull = true,
+} = require("./build.json");
 let pendingUpdate = false;
 let newVersion = version;
 let installURL = null;
 
 async function checkUpdate(){
 	if(checkGit()) {
-		execSync("git pull");
+		if(!noGitPull){
+			try {
+				execSync("git pull");
+			} catch(e) {
+				console.log("FATAL: git pull ERRROR:", e);
+			};
+		};
 		return { pendingUpdate };
 	};
 	try {

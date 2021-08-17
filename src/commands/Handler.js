@@ -19,6 +19,8 @@ class CommandHandler {
 		}));
 		
 		this.loadCommands();
+		plasma.Command = Command;
+		plasma.SubcommandGroup = SubcommandGroup;
 	};
 	loadCommands(){
 		let isInsideSrc = !fs.existsSync("./src");

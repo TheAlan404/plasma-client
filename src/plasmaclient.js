@@ -12,6 +12,7 @@ const { CommandHandler } = require("@Commands");
 const { ChatButtonHandler } = require("@ChatButtons");
 const { MapManager } = require("@Components/MapManager");
 const { ChatModule } = require("@Components/ChatModule");
+const { ElevatorManager } = require("@Components/ElevatorManager");
 
 const createServer = require("./utils/server.js");
 const sendLogin = require("./utils/login.js");
@@ -42,6 +43,7 @@ module.exports = class PlasmaClient extends EventEmitter {
 			cmdHandler: CommandHandler,
 			chatButtons: ChatButtonHandler,
 			maps: MapManager,
+			elevators: ElevatorManager,
 		};
 		
 		for(let moduleName in components){

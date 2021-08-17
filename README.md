@@ -13,6 +13,8 @@ readme in progress
 - [ ] (core) fix package.json
 - [ ] (component) auto login
 - [x] (component) chat buttons
+- [ ] (component) chat log etc
+- [ ] (component) chat message shortcuts ('.,' in the chat? custom command for listing it?) (use clickable chat buttons lol)
 - [ ] (component) fast pm
 - [x] (component) auto tpaccept
 - [ ] (component) highlights

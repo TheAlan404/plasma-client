@@ -1,6 +1,8 @@
 /* Plasma Client | Proxy */
 
 const mc = require("minecraft-protocol");
+const Msg = require("@Msg");
+const { EventEmitter } = require("events");
 const illegalPackets = ["keep_alive", "login", "success"];
 const mainFilter = (client, target, data, meta) => !illegalPackets.includes(meta.name) && !([meta.state, client.state, target.state].filter(x => x !== "play").length);
 
@@ -31,10 +33,34 @@ class ProxyFilter {
 	* Stringifies a filter
 	* @param {string} route - 'send'|'recieve'
 	* @param {string} name - packet name
-	* @param {ProxyFilter} filter 
+	* @param {ProxyFilter} filter
+	* @return {string}
 	*/
 	static toString(route, name, filter){
 		return `Filter<${route}:${name}>(${filter.type})`; /// @example 'Filter<send:chat>(DENY)'
+	};
+	
+	/**
+	* Stringifies the filter as a minecraft chat component
+	* @param {ProxyFilter} filter
+	* @param {object} [opts] - formatting options
+	* @param {Msg} [opts.SEP] - seperator
+	* @param {string} [opts.filterColors] - mc color
+	* @return {Msg[]} chatComponent
+	*/
+	static toChat(filter, opts = {}){
+		const {
+			SEP = new Msg(":", "white"),
+			filterColors = ({
+				READ: "green",
+				MODIFY: "blue",
+				DENY: "red",
+			}),
+			labelSEP = new Msg(" => ", "white"),
+		} = opts;
+		let comp = [new Msg(name, "gray"), SEP, new Msg(filter.type, filterColors[filter.type])];
+		if(filter.label) comp.push(labelSEP, new Msg("'" + filter.label + "'"));
+		return comp;
 	};
 	
 	/**
@@ -84,8 +110,9 @@ class ProxyFilter {
 	};
 };
 
-class Proxy {
+class Proxy extends EventEmitter {
 	constructor(plasma){
+		super();
 		this.plasma = plasma;
 		this.filter = {
 			send: new Map(),
@@ -96,6 +123,20 @@ class Proxy {
 		this.targetClient = null;
 		this.targetClients = new Map();
 		this.nick = null;
+		
+		this.entityPosition = { x: 0, y: 0, z: 0 };
+		this.addFilter("send", "position", new ProxyFilter({
+			type: "READ",
+			filter: (data) => {
+				this.entityPosition.x = data.x;
+				this.entityPosition.y = data.y;
+				this.entityPosition.z = data.z;
+				this.emit("positionChanged", this.entityPosition);
+			},
+			label: "plasma entityPosition",
+		}));
+		
+		plasma.ProxyFilter = ProxyFilter;
 	};
 	connect(client, opts = {}){
 		const { host = "localhost", port = 25565, username = (this.nick || client.username) } = opts;
@@ -139,6 +180,7 @@ class Proxy {
 	attachTargetListeners(client){
 		client.chat = (str) => client.write("chat", { message: str });
 		
+		if(!client.proxy) client.proxy = {};
 		client.proxy.UUIDtoNick = new Map(); // Map<UUID => string>
 		client.proxy.playerList = new Set(); // Set<string>
 		client.on("player_info", (packet) => {

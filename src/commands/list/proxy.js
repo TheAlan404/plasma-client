@@ -26,9 +26,7 @@ module.exports = function(handler){
 					if(plasma.proxy.filter.send.size) {
 						plasma.proxy.filter.send.forEach((list = [], name = "") => {
 							list.forEach(filter => {
-								let comp = [P, new Msg(name, "gray"), SEP, new Msg(filter.type, FILTER_TYPE_COLORS[filter.type])];
-								if(filter.label) comp.push(new Msg(" => ", "white"), new Msg("'" + filter.label + "'"));
-								components.push(comp);
+								components.push([P, ...(new ProxyFilter(filter).toChat())]);
 							});
 						});
 					} else {
@@ -40,9 +38,7 @@ module.exports = function(handler){
 					if(plasma.proxy.filter.recieve.size) {
 						plasma.proxy.filter.recieve.forEach((list = [], name = "") => {
 							list.forEach(filter => {
-								let comp = [P, new Msg(name, "gray"), SEP, new Msg(filter.type, FILTER_TYPE_COLORS[filter.type])];
-								if(filter.label) comp.push(new Msg(" => ", "white"), new Msg("'" + filter.label + "'"));
-								components.push(comp);
+								components.push([P, ...(new ProxyFilter(filter).toChat())]);
 							});
 						});
 					} else {
