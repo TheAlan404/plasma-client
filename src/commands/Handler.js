@@ -136,7 +136,8 @@ class Command {
 	/**
 	* Returns the usage string
 	*/
-	get usage(){
+	usage(...subcmdPath){
+		subcmdPath = subcmdPath.flat(Infinity);
 		if(this.run instanceof SubcommandGroup) {
 			return `${this.name} ${this.run.choices} [...]`;
 		};

@@ -13,6 +13,7 @@ const { ChatButtonHandler } = require("@ChatButtons");
 const { MapManager } = require("@Components/MapManager");
 const { ChatModule } = require("@Components/ChatModule");
 const { ElevatorManager } = require("@Components/ElevatorManager");
+const { MusicPlayer } = require("@Components/MusicPlayer");
 
 const createServer = require("./utils/server.js");
 const sendLogin = require("./utils/login.js");
@@ -44,6 +45,7 @@ module.exports = class PlasmaClient extends EventEmitter {
 			chatButtons: ChatButtonHandler,
 			maps: MapManager,
 			elevators: ElevatorManager,
+			musicPlayer: MusicPlayer,
 		};
 		
 		for(let moduleName in components){
@@ -77,6 +79,12 @@ module.exports = class PlasmaClient extends EventEmitter {
 				this.handleError(e);
 			};
 		};
+	};
+	sendNote(packet){
+		packet.x = this.proxy.entityPosition.x * 8;
+		packet.y = this.proxy.entityPosition.y * 8;
+		packet.z = this.proxy.entityPosition.z * 8;
+		this.write("sound_effect", packet);
 	};
 	chat(comp){
 		for(let i in this.server.clients){

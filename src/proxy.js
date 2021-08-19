@@ -138,6 +138,7 @@ class Proxy extends EventEmitter {
 		
 		plasma.ProxyFilter = ProxyFilter;
 	};
+	
 	connect(client, opts = {}){
 		const { host = "localhost", port = 25565, username = (this.nick || client.username) } = opts;
 		console.log(`[Proxy] Connecting to '${host}${port === 25565 ? "" : `:${port}`}' with username '${username}'...`);
@@ -149,6 +150,11 @@ class Proxy extends EventEmitter {
 		target._proxycb = (data, meta) => this._pass.bind(this)(target, client, data, meta);
 		target.on("packet", target._proxycb);
 	};
+	
+	handleDisconnect(reason){
+		this.plasma.chat(reason); // TODO
+	};
+	
 	/**
 	* Set the nick of the proxy
 	* @param {string} username
@@ -183,6 +189,8 @@ class Proxy extends EventEmitter {
 		if(!client.proxy) client.proxy = {};
 		client.proxy.UUIDtoNick = new Map(); // Map<UUID => string>
 		client.proxy.playerList = new Set(); // Set<string>
+		client.proxy.loadedChunks = new Set(); // Set<`X;Z`>
+		
 		client.on("player_info", (packet) => {
 			packet.data.forEach((item) => {
 				if(packet.action === 0) {
@@ -193,6 +201,18 @@ class Proxy extends EventEmitter {
 					client.proxy.playerList.delete(client.proxy.UUIDtoNick.get(item.UUID));
 				};
 			});
+		});
+		
+		client.on("unload_chunk", ({ chunkX: x, chunkZ: z }) => {
+			let id = `${x};${z}`;
+			client.proxy.loadedChunks.delete(id);
+			this.emit("unloadChunk", id);
+		});
+		
+		client.on("map_chunk", ({ x, z }) => {
+			let id = `${x};${z}`;
+			client.proxy.loadedChunks.add(id);
+			this.emit("loadChunk", id);
 		});
 	};
 	

@@ -24,11 +24,8 @@ class TextMenu {
 	send(client){
 		if(this.header && this.header.length) client.chat(this.header);
 		for(let content of this.contents){
-			if(content instanceof Msg) {
-				client.chat(content);
-				continue;
-			};
-			if(typeof content == "string") {
+			if(!content) continue;
+			if(content instanceof Msg || typeof content == "string" || Array.isArray(content)) {
 				client.chat(content);
 				continue;
 			};
@@ -92,7 +89,6 @@ class ButtonList {
 		return text;
 	};
 };
-
 
 
 

@@ -9,6 +9,7 @@ module.exports = (handler) => {
 		desc: "Copies a text to clipboard",
 		run: (args, plasma) => {
 			let text = args.join(" ").trim();
+			if(!text) return;
 			clip.writeSync(text);
 		},
 	});

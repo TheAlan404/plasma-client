@@ -19,7 +19,7 @@
   "_moduleAliases": {
     "@root": ".",
     "@Msg": "./src/classes/Msg.js",
-    "@Proxy": "./src/proxy.js",
+    "@Proxy": "./src/Proxy.js",
     "@Commands": "./src/commands/Handler.js",
     "@Components": "./src/components",
     "@ChatButtons": "./src/components/ChatButtons.js"
@@ -31,7 +31,7 @@
     "clipboardy": "^2.3.0",
     "minecraft-protocol": "^1.25.0",
     "module-alias": "^2.2.2",
-    "nbs.js": "^1.0.2",
+    "nbs.js": "^1.0.3",
     "nmp-player": "^1.1.0",
     "node-fetch": "^2.6.1",
     "owoify-js": "^1.0.7",

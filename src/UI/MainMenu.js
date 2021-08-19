@@ -8,11 +8,17 @@ const { pendingUpdate, newVersion } = require("../updater.js");
 
 // the worst code ive ever written idk
 
-const menus = {
-	main: (plasma, client, ctx) => {
-		
-	},
-};
+const P = new Msg("[P] ", "dark_aqua");
+const MEDAL_INFO = [
+	new Msg("(", "green"),
+	new Msg("i", "green"),
+	new Msg(") ", "green"),
+];
+const MEDAL_ALERT = [
+	new Msg("(", "dark_red"),
+	new Msg("!", "red"),
+	new Msg(") ", "dark_red"),
+];
 
 const mainMenuCommands = {
 	REFRESH: (plasma, client) => {
@@ -23,11 +29,12 @@ const mainMenuCommands = {
 		
 	},
 	NICK: async (plasma, client) => {
+		client.chat([...MEDAL_INFO, new Msg("Enter nick:", "gray")]);
 		let notExit = true;
 		while(notExit){
 			let nick = await ChatListener.prompt(client);
 			if(nick == "cancel") {
-				init(plasma, client, () => client.chat(new Msg("> Cancelled", "gray")));
+				init(plasma, client, () => client.chat(new Msg("> Change nick cancelled", "gray")));
 				return true;
 			};
 			if(nick == "reset" || nick === client.username) {
@@ -42,7 +49,7 @@ const mainMenuCommands = {
 				init(plasma, client, () => client.chat(new Msg("> Nick has been set", "gray")));
 				return true;
 			} else {
-				client.chat([new Msg(" (!) ", "red"), new Msg("Invalid nick, try again (type 'cancel' to cancel, 'reset' to reset):")]);
+				client.chat([...MEDAL_ALERT, new Msg("Invalid nick, try again (type 'cancel' to cancel, 'reset' to reset):")]);
 			};
 		};
 		return true;
@@ -54,7 +61,6 @@ const mainMenuCommands = {
 		client.chat([
 			new Msg(" (i) ", "green"),
 			new Msg("Available main menu commands:\n", "gray"),
-			// eslint-disable-next-line
 			new Msg("     " + Object.keys(mainMenuCommands).map(cmd => `#${cmd}`).join("\n")),
 		]);
 	},
@@ -62,6 +68,23 @@ const mainMenuCommands = {
 
 function init(plasma, client, cb = () => null){
 	let div = "-".repeat(15);
+	
+	let midText = [
+		(pendingUpdate ? [
+			...MEDAL_INFO,
+			new Msg("Pending update: ", "gray"),
+			new Msg(newVersion, "gold"),
+			new Msg(" [UPDATE] ", "aqua",
+				new Msg("Click to install the update"),
+			"#INSTALLUPDATE"),
+		] : null),
+		(plasma.proxy.nick && plasma.proxy.nick.length ? [
+			...MEDAL_INFO,
+			new Msg("You are currently nicked as ", "gray"),
+			new Msg(plasma.proxy.nick, "gold"),
+		] : null),
+	];
+	
 	let main = new TextMenu({
 		header: [new Msg(div+"/"), new Msg("Plasma Client", "dark_aqua"), new Msg("\\"+div, "white"), "\n"],
 		footer: ["\n", new Msg(div+"\\"), new Msg("Select Server", "gold"), new Msg("/"+div, "white")],
@@ -73,27 +96,18 @@ function init(plasma, client, cb = () => null){
 					new Msg("\nIP: ", "gold"), new Msg(ip, "white")
 				], ip)
 			)]),
-			"\n",
-			...((direct_connect.length && direct_connect != plasma.localIP) ? [
+			" ",
+			((direct_connect.length && direct_connect != plasma.localIP) ? [
 				new Msg("- [direct connect]\n", "green", [
 					new Msg("Connect to the last direct connect IP:", "white"),
 					new Msg("\n"),
 					new Msg(direct_connect, "gold")
 				], direct_connect)
-			] : []),
-			...(pendingUpdate ? [
-				new Msg(" (i) ", "green"),
-				new Msg("Pending update: ", "gray"),
-				new Msg(newVersion, "gold"),
-				new Msg(" [UPDATE] ", "aqua",
-					new Msg("Click to install the update"),
-				"#INSTALLUPDATE"),
-			] : []),
-			...(plasma.proxy.nick && plasma.proxy.nick.length ? [
-				new Msg(" (i) ", "green"),
-				new Msg("You are currently nicked as ", "gray"),
-				new Msg(plasma.proxy.nick, "gold"),
-			] : []),
+			] : null),
+			
+			...midText,
+			(midText.filter(_ => _).length ? " " : null),
+			
 			// TODO: Make this customizeable etc
 			new ButtonRow([
 				new Msg("Refresh", "gold", 
@@ -109,10 +123,10 @@ function init(plasma, client, cb = () => null){
 					new Msg("Configure general settings for Plasma", "gray"),
 				"#CONFIG"),
 			]),
-			...(plasma.consoleMode ? [
+			(plasma.consoleMode ? [
 			    new Msg(" (i) ", "green"),
 			    new Msg("Console mode is on.\n     Type the IP address to connect.\n     Type '#LIST' for main menu commands", "gray"),
-			] : []),
+			] : null),
 		],
 	});
 	main.send(client);
