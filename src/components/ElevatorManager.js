@@ -8,34 +8,66 @@ const P = new Msg("[P] ", "dark_aqua");
 class ElevatorManager {
 	constructor(plasma){
 		this.plasma = plasma;
-		
 		this.elevators = new Map();
 		
-		this.plasma.proxy.addFilter("recieve", "map_chunk", new ProxyFilter({
-			type: "READ",
-			filter: (data) => {}, // TODO: load cached/saved elevators
-			label: "plasma elevators",
-		}));
+		this.initEvents();
+		this.loadFromDatabase();
+	};
+	
+	initEvents(){
+		this.plasma.proxy.on("loadChunk", (id) => {
+			this.loadFromChunk(id);
+		});
 		
-		this.plasma.proxy.addFilter("recieve", "unload_chunk", new ProxyFilter({
-			type: "READ",
-			filter: (data) => {}, // TODO: unload elevator
-			label: "plasma elevators",
-		}));
+		this.plasma.proxy.on("unloadChunk", (id) => {
+			// todo..?
+		});
 		
-		this.plasma.proxy.addFilter("send", "use_entity", new ProxyFilter({
-			type: "DENY",
-			filter: (data) => {}, // TODO: send elevator buttons to chat + only DENY the packet if entity is an elevator
-			label: "plasma elevators",
-		}));
+		this.plasma.proxy.addFilter("send", "use_entity", ProxyFilter.deny((data) => {
+			// TODO: send elevator buttons to chat + only DENY the packet if entity is an elevator
+		}).label("plasma elevators"));
 		
 		plasma.proxy.on("positionChanged", (pos) => {
 			// TODO: bossbars
 		});
 	};
+	
+	loadFromDatabase(ip){
+		let data = this.plasma.db.get("elevators");
+		if(data["*"]) data["*"].forEach(elev => this.add(new Elevator(elev)));
+		if(!data[ip]) return;
+		for(let elev of data[ip]){
+			this.add(new Elevator(elev));
+		};
+	};
+	
 	add(elevator){
 		elevator.plasma = this.plasma;
 		this.elevators.set(elevator.entityId, elevator);
+	};
+	
+	loadFromChunk(x, z){
+		if(typeof x === "string" && x.includes(";")) {
+			let s = x.split(";");
+			x = s[0];
+			z = s[1];
+		};
+		
+		for(let elev of this.elevators.values()){
+			if(elev.chunkPos[0] == x && elev.chunkPos[1] == z) this.loadElevator(elev.entityId);
+		};
+	};
+	
+	loadElevator(id){
+		let elevator = this.elevators.get(id);
+		if(!elevator) return;
+		elevator.sendPacket();
+	};
+	
+	unloadElevator(id){
+		let elevator = this.elevators.get(id);
+		if(!elevator) return;
+		//elevator.sendPacket();
 	};
 };
 

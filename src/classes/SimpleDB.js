@@ -21,7 +21,7 @@ class SimpleDB {
 	};
 	load(def = {}){
 		if(!fs.existsSync(this.path)) {
-			fs.writeFileSync(this.path, JSON.stringify(def));
+			fs.writeFileSync(this.path, JSON.stringify(def, null, "\t"));
 		};
 		let raw = fs.readFileSync(this.path);
 		let _data = {};
@@ -30,14 +30,14 @@ class SimpleDB {
 		} catch(e) {
 			console.log("[ERR] Corrupt config. Backing up and creating an empty one");
 			fs.writeFileSync(this.path + "._old" + Date.now() + ".json", raw);
-			fs.writeFileSync(this.path, JSON.stringify(def));
+			fs.writeFileSync(this.path, JSON.stringify(def, null, "\t"));
 			_data = def;
 		};
 		this._data = _data;
 	};
 	save(){
 		try {
-			let raw = JSON.stringify(this._data);
+			let raw = JSON.stringify(this._data, null, "\t");
 			fs.writeFileSync(this.path, raw);
 		} catch(e){
 			console.log("[ERR] Unexpected error occurred while saving config", e);

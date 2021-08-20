@@ -2,6 +2,7 @@
 
 const mc = require("minecraft-protocol");
 const Msg = require("@Msg");
+const mainMenu = require("./UI/MainMenu.js");
 const { EventEmitter } = require("events");
 const illegalPackets = ["keep_alive", "login", "success"];
 const mainFilter = (client, target, data, meta) => !illegalPackets.includes(meta.name) && !([meta.state, client.state, target.state].filter(x => x !== "play").length);
@@ -30,6 +31,16 @@ class ProxyFilter {
 	};
 	
 	/**
+	* Set the label of this ProxyFilter
+	* @param {string} label
+	* @return {ProxyFilter}
+	*/
+	label(label = ""){
+		this.label = label;
+		return this;
+	};
+	
+	/**
 	* Stringifies a filter
 	* @param {string} route - 'send'|'recieve'
 	* @param {string} name - packet name
@@ -38,29 +49,6 @@ class ProxyFilter {
 	*/
 	static toString(route, name, filter){
 		return `Filter<${route}:${name}>(${filter.type})`; /// @example 'Filter<send:chat>(DENY)'
-	};
-	
-	/**
-	* Stringifies the filter as a minecraft chat component
-	* @param {ProxyFilter} filter
-	* @param {object} [opts] - formatting options
-	* @param {Msg} [opts.SEP] - seperator
-	* @param {string} [opts.filterColors] - mc color
-	* @return {Msg[]} chatComponent
-	*/
-	static toChat(filter, opts = {}){
-		const {
-			SEP = new Msg(":", "white"),
-			filterColors = ({
-				READ: "green",
-				MODIFY: "blue",
-				DENY: "red",
-			}),
-			labelSEP = new Msg(" => ", "white"),
-		} = opts;
-		let comp = [new Msg(name, "gray"), SEP, new Msg(filter.type, filterColors[filter.type])];
-		if(filter.label) comp.push(labelSEP, new Msg("'" + filter.label + "'"));
-		return comp;
 	};
 	
 	/**
@@ -125,12 +113,19 @@ class Proxy extends EventEmitter {
 		this.nick = null;
 		
 		this.entityPosition = { x: 0, y: 0, z: 0 };
+		this.addFilter("recieve", "disconnect", new ProxyFilter({
+			type: "DENY",
+			filter: ({ reason }) => {
+				return true;
+			},
+			label: "plasma proxy",
+		}));
 		this.addFilter("send", "position", new ProxyFilter({
 			type: "READ",
-			filter: (data) => {
-				this.entityPosition.x = data.x;
-				this.entityPosition.y = data.y;
-				this.entityPosition.z = data.z;
+			filter: ({ x, y, z }) => {
+				this.entityPosition.x = x;
+				this.entityPosition.y = y;
+				this.entityPosition.z = z;
 				this.emit("positionChanged", this.entityPosition);
 			},
 			label: "plasma entityPosition",
@@ -151,8 +146,26 @@ class Proxy extends EventEmitter {
 		target.on("packet", target._proxycb);
 	};
 	
-	handleDisconnect(reason){
-		this.plasma.chat(reason); // TODO
+	disconnect(id){
+		if(id) {
+			if(this.targetClients.has(id)) {
+				this.targetClients.get(id).end();
+			};
+		} else {
+			if(this.targetClient) {
+				this.targetClient.end();
+			};
+		};
+	};
+	
+	handleDisconnect(target, reason){
+		this.targetClients.delete(target.proxyid);
+		this.plasma.chat([new Msg("[P] ", "dark_aqua"), new Msg("Client disconnected." + ( reason ? " Reason:" : "" ), "gray")]);
+		if(reason) this.plasma.chat(reason);
+		if(this.targetClient === target) {
+			this.targetClient = null;
+			mainMenu.init(this.plasma, this.plasma.client);
+		};
 	};
 	
 	/**
@@ -177,6 +190,10 @@ class Proxy extends EventEmitter {
 		// to store proxy/client data
 		client.proxy = {};
 		client.on("login", () => console.log(`[Proxy] client(${id}) is logged in`));
+		client.on("end", (reason) => {
+			console.log(`[Proxy] client(${id}) ended`);
+			this.handleDisconnect(client, reason || client._endReason);
+		});
 		if(!detached) this.targetClients.set(id, client);
 		if(setAsCurrent) this.targetClient = client;
 		this.attachTargetListeners(client);
@@ -187,9 +204,12 @@ class Proxy extends EventEmitter {
 		client.chat = (str) => client.write("chat", { message: str });
 		
 		if(!client.proxy) client.proxy = {};
+		client.entityId = null;
 		client.proxy.UUIDtoNick = new Map(); // Map<UUID => string>
 		client.proxy.playerList = new Set(); // Set<string>
 		client.proxy.loadedChunks = new Set(); // Set<`X;Z`>
+		
+		client.on("login", ({ entityId }) => client.entityId = entityId);
 		
 		client.on("player_info", (packet) => {
 			packet.data.forEach((item) => {
@@ -237,21 +257,28 @@ class Proxy extends EventEmitter {
 	    this.filter[route].get(name).push(filter);
 	};
 	
-	// Private/Internal Methods
+	// --- Private/Internal Methods ---
 	_pass(client, target, data, meta){
 		if(!mainFilter(client, target, data, meta)) return;
 		let route = client.isServer ? "send" : "recieve";
 		if(this.filter[route+"All"] === false) return;
 	    let { modified, shouldSend } = this._filterCheck(client, target, data, meta, route);
+		if(process.argv.includes("--packet-debug")) console.log(`[Proxy-Debug] Packet: R=${route};N=${meta.name};D=${JSON.stringify(data)}`);
 		if(shouldSend) target.write(meta.name, modified || data);
 	};
 	_filterCheck(client, target, data, meta, route){
 	    let shouldSend = true;
-	    let modified;
+	    let modified = data;
 	    let { name } = meta;
+		
+		if(modified.entityId) {
+			if(route === "recieve" && modified.entityId === client.entityId) modified.entityId = this.plasma.clientEntityId;
+			if(route === "send" && modified.entityId === this.plasma.clientEntityId) modified.entityId = client.entityId;
+		};
+		
 	    if(this.filter[route].has(name) && Array.isArray(this.filter[route].get(name))) {
-	        let args = [data];
 	        for(let filter of this.filter[route].get(name)){
+				let args = [modified, client];
 	            if(filter.type == "READ") {
 	                filter.filter(...args);
 	                continue;

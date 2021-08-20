@@ -27,8 +27,9 @@ readme in progress
 - [ ] (feat) keep equipment on creative inventory clear
 - [ ] (proxy) client settings
 - [ ] (proxy) target client save list of players
-- [ ] (proxy) Entity ID swapping
-- [ ] (proxy) handle disconnects
+- [x] (proxy) Entity ID swapping
+- [x] (proxy) handle disconnects
+- [ ] (proxy) unload stuff on disconnect
 - [ ] (proxy) targetClient chat message queue (and custom queue times etc)
 - [ ] (proxy+ui) list clients in main menu
 - [ ] (ui) better classes

@@ -206,7 +206,7 @@ class SubcommandGroup {
 			if(arg) {
 				plasma.chat([new Msg("[P] ", "dark_aqua"), new Msg(`Error: ${arg} is not a valid subcommand! Subcommands: ${this.choices}`, "gray")]);
 			} else {
-				plasma.chat([new Msg("[P] ", "dark_aqua"), new Msg(cmd.usage, "gray")]);
+				plasma.chat([new Msg("[P] ", "dark_aqua"), new Msg(cmd.usage || "Error", "gray")]);
 			};
 		});
 	};
