@@ -96,17 +96,21 @@ function init(plasma, client, cb = () => null){
 		] : null),
 	];
 	
+	let ServerList = removeCurrent(plasma, server_list);
+	
 	let main = new TextMenu({
 		header: [new Msg(div+"/"), new Msg("Plasma Client", "dark_aqua"), new Msg("\\"+div, "white"), "\n"],
 		footer: ["\n", new Msg(div+"\\"), new Msg("Select Server", "gold"), new Msg("/"+div, "white")],
 		contents: [
-			new ButtonList([...removeCurrent(plasma, server_list).map(({ name, ip }) => 
+			new ButtonList(ServerList.map(({ name, ip }, idx) => 
 				new Msg(ip, "aqua", [
 					new Msg("Connect to ", "white"),
 					new Msg('"'+name+'"', "aqua"),
 					new Msg("\nIP: ", "gold"), new Msg(ip, "white")
 				], ip)
-			)]),
+			), {
+				border: (plasma.consoleMode ? [`${idx + 1} > [`, "]"] : ["> [", "]"]),
+			}),
 			" ",
 			((direct_connect.length && direct_connect != plasma.localIP) ? [
 				new Msg("- [direct connect]\n", "green", [
@@ -159,9 +163,16 @@ function init(plasma, client, cb = () => null){
 	        let stop = mainMenuCommands[cmd](plasma, client, message.split(" ").slice(1));
 	        if(!stop && !(stop instanceof Promise)) getInput();
 	    } else {
+			if(!isNaN(message)) {
+				if(!ServerList[message - 1]) {
+					client.chat([...MEDAL_ALERT, new Msg(`No server with number ${message}`, "gray")]);
+					return getInput();
+				};
+				message = ServerList[message - 1].ip;
+			};
 			let h = message.split(":")[0];
 			let p = message.split(":")[1] ?? 25565;
-			client.chat([new Msg("[P] ", "dark_aqua"), new Msg(`Connecting to '${h}${p === 25565 ? "" : `:${p}`}'${!plasma.proxy.nick ? "" : ` with username '${plasma.proxy.nick}'`}...`, "gray")]);
+			client.chat([P, new Msg(`Connecting to '${h}${p === 25565 ? "" : `:${p}`}'${!plasma.proxy.nick ? "" : ` with username '${plasma.proxy.nick}'`}...`, "gray")]);
 	        plasma.proxy.connect(client, {
 	            host: h,
 	            port: p,
