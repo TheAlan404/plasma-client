@@ -1,7 +1,7 @@
 /* Plasma Client | (UI) MainMenu */
 const { TextMenu, ButtonRow, ButtonList } = require("../classes/TextMenu.js");
 const ChatListener = require("../classes/ChatListener.js");
-const Msg = require("../classes/Msg.js");
+const Msg = require("@Msg");
 const { validateNick } = require("../utils/utils.js");
 const { server_list, direct_connect } = require("../utils/localserverlist.js")();
 const { pendingUpdate, newVersion } = require("../updater.js");
@@ -21,6 +21,7 @@ const MEDAL_ALERT = [
 	new Msg("!", "red"),
 	new Msg(") ", "dark_red"),
 ];
+const PAD = "\n     ";
 
 const mainMenuCommands = {
 	REFRESH: (plasma, client) => {
@@ -62,9 +63,17 @@ const mainMenuCommands = {
 	LIST: (plasma, client) => {
 		client.chat([
 			new Msg(" (i) ", "green"),
-			new Msg("Available main menu commands:\n", "gray"),
-			new Msg("     " + Object.keys(mainMenuCommands).map(cmd => `${menuPrefix}${cmd}`).join("\n")),
+			new Msg("Available main menu commands:", "gray"),
+			new Msg(Object.keys(mainMenuCommands).map(cmd => `${PAD}${menuPrefix}${cmd}`).join(""), "white"),
 		]);
+	},
+	EXIT: async (plasma, client) => {
+		client.chat([...MEDAL_ALERT, new Msg("Are you sure you want to exit? [y/n]", "gray")]);
+		let answer = await ChatListener.prompt(client);
+		let yes = answer[0].toLowerCase() === "y";
+		if(yes) process.exit();
+		init(plasma, client);
+		return true;
 	},
 };
 
@@ -107,6 +116,9 @@ function init(plasma, client, cb = () => null){
 				], direct_connect)
 			] : null),
 			
+			new Msg("> You can also type the IP address into the chat", "gray"),
+			" ",
+			
 			...midText,
 			(midText.filter(_ => _).length ? " " : null),
 			
@@ -127,7 +139,11 @@ function init(plasma, client, cb = () => null){
 			]),
 			(plasma.consoleMode ? [
 			    new Msg(" (i) ", "green"),
-			    new Msg("Console mode is on.\n     Type the IP address to connect.\n     Type '@LIST' for main menu commands", "gray"),
+			    new Msg("Console mode is on.", "gray"),
+				PAD, new Msg("Type the IP address to connect.", "gray"),
+				PAD, new Msg("Type '", "gray"),
+				new Msg("@LIST", "white"),
+				new Msg("' for main menu commands", "gray"),
 			] : null),
 		],
 	});

@@ -1,21 +1,36 @@
 /* Plasma Client | Console Chat */
 const { createClient } = require("minecraft-protocol");
 const chalk = require("chalk");
+const { once } = require("events");
 
-module.exports = (plasma) => {
-	plasma.localIP = process.argv[3] // fix later ;3
-	plasma.chatclient = createClient({
-		username: process.argv[4] || "console",
-		host: plasma.localIP.split(":")[0],
-		port: plasma.localIP.split(":")[1] || 25565, 
-	});
-	plasma.chatclient.on("chat", ({ message }) => {
-		console.log(buildString(message));
-	});
+const PC = chalk.cyan("[PlasmaConsole] ");
+
+module.exports = async (plasma) => {
+	plasma.consoleMode = true;
+	
+	await once(plasma, "ready");
+	console.log(PC + "Type your username:");
+	
 	plasma.stdin = process.openStdin();
 	plasma.stdin.on("data", (d) => {
 		let msg = d.toString().trim();
-		plasma.chatclient.write("chat", { message: msg });
+		if(plasma.chatclient) {
+			plasma.chatclient.write("chat", { message: msg });
+		} else {
+			console.log(PC + "Username set to '" + (msg || "consoleuser") + "'");
+			plasma.chatclient = createClient({
+				username: msg || "consoleuser",
+				host: "localhost",
+				port: 25565, 
+			});
+			plasma.chatclient.on("chat", ({ message }) => {
+				console.log(buildString(message));
+			});
+			plasma.chatclient.on("end", () => {
+				console.log(PC + "Unexpected end event, aborting");
+				process.exit(1);
+			});
+		};
 	});
 };
 

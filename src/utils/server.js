@@ -18,6 +18,7 @@ module.exports = (plasma, port) => {
 	plasma.localIP = "localhost" + (_p == 25565 ? "" : ":" + _p);
 	plasma.server.on("listening", () => {
 		console.log(chalk.cyan("[Plasma]")+chalk.gray(" Ready! Login to ")+chalk.white(plasma.localIP)+chalk.gray(" to use Plasma."));
+		plasma.emit("ready");
 	});
 	plasma.server.getFirstClient = () => {
 		return plasma.server.clients[Object.keys(plasma.server.clients)[0]];
