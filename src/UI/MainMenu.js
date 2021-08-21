@@ -8,6 +8,8 @@ const { pendingUpdate, newVersion } = require("../updater.js");
 
 // the worst code ive ever written idk
 
+const menuPrefix = "@";
+
 const P = new Msg("[P] ", "dark_aqua");
 const MEDAL_INFO = [
 	new Msg("(", "green"),
@@ -61,7 +63,7 @@ const mainMenuCommands = {
 		client.chat([
 			new Msg(" (i) ", "green"),
 			new Msg("Available main menu commands:\n", "gray"),
-			new Msg("     " + Object.keys(mainMenuCommands).map(cmd => `#${cmd}`).join("\n")),
+			new Msg("     " + Object.keys(mainMenuCommands).map(cmd => `${menuPrefix}${cmd}`).join("\n")),
 		]);
 	},
 };
@@ -112,20 +114,20 @@ function init(plasma, client, cb = () => null){
 			new ButtonRow([
 				new Msg("Refresh", "gold", 
 					new Msg("Refreshes the server list\nIf no server is listed click this button.", "gray"),
-				"#REFRESH"),
+				`${menuPrefix}REFRESH`),
 				new Msg("Change Nick", "blue",
 					new Msg("Changes nick", "gray"),
-				"#NICK"),
+				`${menuPrefix}NICK`),
 				new Msg("Set Prefix", "purple",
 					new Msg("Changes the command prefix.\Will be changed via a config command in the future.", "gray"),
-				"#PREFIX"),
+				`${menuPrefix}PREFIX`),
 				new Msg("Settings", "gray",
 					new Msg("Configure general settings for Plasma", "gray"),
-				"#CONFIG"),
+				`${menuPrefix}CONFIG`),
 			]),
 			(plasma.consoleMode ? [
 			    new Msg(" (i) ", "green"),
-			    new Msg("Console mode is on.\n     Type the IP address to connect.\n     Type '#LIST' for main menu commands", "gray"),
+			    new Msg("Console mode is on.\n     Type the IP address to connect.\n     Type '@LIST' for main menu commands", "gray"),
 			] : null),
 		],
 	});
@@ -133,12 +135,12 @@ function init(plasma, client, cb = () => null){
 	let getInput = async () => {
 	    let message = await ChatListener.prompt(client);
 		if(message[0] === ".") return;
-	    if(message.startsWith("#")) {
+	    if(message.startsWith(menuPrefix)) {
 	        let cmd = message.split(" ")[0].slice(1).toUpperCase();
 	        if(!mainMenuCommands[cmd]) {
 	            return;
 	        };
-	        let stop = mainMenuCommands[cmd](plasma, client);
+	        let stop = mainMenuCommands[cmd](plasma, client, message.split(" ").slice(1));
 	        if(!stop && !(stop instanceof Promise)) getInput();
 	    } else {
 			let h = message.split(":")[0];
