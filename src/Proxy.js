@@ -28,6 +28,7 @@ class ProxyFilter {
 		this.type = data.type || "DENY";
 		this.filter = data.filter || (this.type == "DENY" ? (() => true) : (_=>_));
 		this.label = data.label ?? null;
+		return this;
 	};
 	
 	/**
@@ -35,7 +36,7 @@ class ProxyFilter {
 	* @param {string} label
 	* @return {ProxyFilter}
 	*/
-	label(label = ""){
+	setLabel(label = ""){
 		this.label = label;
 		return this;
 	};

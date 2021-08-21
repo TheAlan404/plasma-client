@@ -29,6 +29,7 @@
     "asar": "^3.0.3",
     "chalk": "^4.1.2",
     "clipboardy": "^2.3.0",
+    "minecraft-folder-path": "^1.2.0",
     "minecraft-protocol": "^1.25.0",
     "module-alias": "^2.2.2",
     "nbs.js": "^1.0.3",

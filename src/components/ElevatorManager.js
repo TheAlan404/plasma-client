@@ -25,9 +25,9 @@ class ElevatorManager {
 		
 		this.plasma.proxy.addFilter("send", "use_entity", ProxyFilter.deny((data) => {
 			// TODO: send elevator buttons to chat + only DENY the packet if entity is an elevator
-		}).label("plasma elevators"));
+		}).setLabel("plasma elevators"));
 		
-		plasma.proxy.on("positionChanged", (pos) => {
+		this.plasma.proxy.on("positionChanged", (pos) => {
 			// TODO: bossbars
 		});
 	};

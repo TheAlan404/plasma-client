@@ -12,6 +12,7 @@
 		"socket.io-client",
 		"nbs.js",
 		"adm-zip",
-		"asar"
+		"asar",
+		"minecraft-folder-path"
 	]
 }
