@@ -97,7 +97,7 @@ function init(plasma, client, cb = () => null){
 	];
 	
 	let ServerList = removeCurrent(plasma, server_list);
-	
+	let ii = 0;
 	let main = new TextMenu({
 		header: [new Msg(div+"/"), new Msg("Plasma Client", "dark_aqua"), new Msg("\\"+div, "white"), "\n"],
 		footer: ["\n", new Msg(div+"\\"), new Msg("Select Server", "gold"), new Msg("/"+div, "white")],
@@ -109,7 +109,7 @@ function init(plasma, client, cb = () => null){
 					new Msg("\nIP: ", "gold"), new Msg(ip, "white")
 				], ip)
 			), {
-				border: (plasma.consoleMode ? [`${idx + 1} > [`, "]"] : ["> [", "]"]),
+				border: (plasma.consoleMode ? [`${++ii} > [`, "]"] : ["> [", "]"])
 			}),
 			" ",
 			((direct_connect.length && direct_connect != plasma.localIP) ? [
