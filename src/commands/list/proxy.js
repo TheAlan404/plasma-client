@@ -117,6 +117,22 @@ module.exports = function(handler){
 							plasma.chat([P, new Msg(`${args[4]} is not a proxy filter type. Available types: 'read', 'modify' and 'deny'`, "gray")]);
 					};
 				},
+				
+				/* // Use .eval pls '^'
+				enable: (args, plasma) => {
+					// .proxy filter enable <route> <name> <index>
+					if(!args[3] || !args[4]) return plasma.chat([P, new Msg("Usage: .proxy filter enable <route> <name> <(read|modify|deny)> [fn]", "gray")]);
+					let route = args[3][0] == "s" ? "send" : (args[3][0] == "r" ? "recieve" : "ERROR");
+					if(route == "ERROR") return plasma.chat([P, new Msg("Route isn't 'send' or 'recieve'!", "gray")]);
+					
+				},
+				disable: (args, plasma) => {
+					
+				},
+				destroy: (args, plasma) => {
+					
+				},*/
+				
 				recieveAll: (args, plasma) => {
 					let bool = args[3];
 					if(bool[0] != "t" || bool[0] != "f") return plasma.chat([P, new Msg("Usage: .proxy filter recieveAll <(true|false)>")]);

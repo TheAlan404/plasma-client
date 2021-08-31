@@ -13,6 +13,8 @@ class ProxyFilter {
 	* @param {Object} data
 	* @param {"DENY"|"MODIFY"|"READ"} data.type - default "DENY"
 	* @param {function} data.filter
+	* @param {string} [data.label] - description
+	* @param {boolean} [data.disabled=false]
 	* if type is READ, the filter doesnt affect the packet handling
 	* if type is DENY, filter should return `true` to accually deny the packet.
 	* if type is MODIFY, filter should return the modified packet. filter can also return `false` to deny the packet.
@@ -28,6 +30,7 @@ class ProxyFilter {
 		this.type = data.type || "DENY";
 		this.filter = data.filter || (this.type == "DENY" ? (() => true) : (_=>_));
 		this.label = data.label ?? null;
+		this.disabled = data.disabled ?? false;
 		return this;
 	};
 	
@@ -115,6 +118,13 @@ class Proxy extends EventEmitter {
 		
 		this.entityPosition = { x: 0, y: 0, z: 0 };
 		this.addFilter("recieve", "disconnect", new ProxyFilter({
+			type: "DENY",
+			filter: ({ reason }) => {
+				return true;
+			},
+			label: "plasma proxy",
+		}));
+		this.addFilter("recieve", "kick_disconnect", new ProxyFilter({
 			type: "DENY",
 			filter: ({ reason }) => {
 				return true;
@@ -279,6 +289,7 @@ class Proxy extends EventEmitter {
 		
 	    if(this.filter[route].has(name) && Array.isArray(this.filter[route].get(name))) {
 	        for(let filter of this.filter[route].get(name)){
+				if(filter.disabled) continue;
 				let args = [modified, client];
 	            if(filter.type == "READ") {
 	                filter.filter(...args);
