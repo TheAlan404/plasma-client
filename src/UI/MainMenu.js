@@ -21,7 +21,7 @@ const MEDAL_ALERT = [
 	new Msg("!", "red"),
 	new Msg(") ", "dark_red"),
 ];
-const PAD = "\n     ";
+const PAD = "     ";
 
 const mainMenuCommands = {
 	REFRESH: (plasma, client) => {
@@ -64,17 +64,40 @@ const mainMenuCommands = {
 		client.chat([
 			new Msg(" (i) ", "green"),
 			new Msg("Available main menu commands:", "gray"),
-			new Msg(Object.keys(mainMenuCommands).map(cmd => `${PAD}${menuPrefix}${cmd}`).join(""), "white"),
 		]);
+		Object.keys(mainMenuCommands).forEach((cmd) => {
+			let str = menuPrefix + cmd;
+			let desc = mainMenuCommandDescriptions[cmd];
+			client.chat([
+				new Msg(PAD, "white"),
+				new Msg(str, "white", `Click to run ${str}`, str),
+				...(desc ? [
+					new Msg(` - ${desc}`, "gray"),
+				] : []),
+			]);
+		});
 	},
 	EXIT: async (plasma, client) => {
-		client.chat([...MEDAL_ALERT, new Msg("Are you sure you want to exit? [y/n]", "gray")]);
+		client.chat([
+			...MEDAL_ALERT,
+			new Msg("Are you sure you want to exit? [", "gray"),
+			new Msg("yes", "green", null, "yes lemme out!!"),
+			new Msg("/", "gray"),
+			new Msg("no", "red", null, "no ty ill play more"),
+			new Msg("]", "gray"),
+		]);
 		let answer = await ChatListener.prompt(client);
 		let yes = answer[0].toLowerCase() === "y";
 		if(yes) process.exit();
 		init(plasma, client);
 		return true;
 	},
+};
+
+const mainMenuCommandDescriptions = {
+	NICK: "Change your nickname",
+	LIST: "Lists the main menu commands",
+	EXIT: "Exit Plasma",
 };
 
 function init(plasma, client, cb = () => null){
@@ -148,8 +171,8 @@ function init(plasma, client, cb = () => null){
 			]),
 			(plasma.consoleMode ? [
 			    new Msg(" (i) ", "green"),
-			    new Msg("Console mode is on.", "gray"),
-				PAD, new Msg("Type the IP address or the number in the list to connect.", "gray"),
+			    new Msg("Console mode is on.", "gray"), "\n",
+				PAD, new Msg("Type the IP address or the number in the list to connect.", "gray"), "\n",
 				PAD, new Msg("Type '", "gray"),
 				new Msg("@LIST", "white"),
 				new Msg("' for main menu commands", "gray"),
