@@ -19,10 +19,10 @@ class ChatButtonHandler {
 		try {
 			let comp = JSON.parse(data.message);
 			if(Array.isArray(comp)) {
-				comp.forEach(this._modify.bind(this));
+				comp = comp.map(this._modify.bind(this));
 			} else if(typeof comp === "object") {
 				if(comp.extra) {
-					comp.extra.forEach(this._modify.bind(this));
+					comp.extra = comp.extra.map(this._modify.bind(this));
 				};
 			};
 			return { message: JSON.stringify(comp) };
@@ -45,6 +45,7 @@ class ChatButtonHandler {
 				ii--;
 			});
 		});
+		return comp;
 	};
 	
 	addButton(btn){

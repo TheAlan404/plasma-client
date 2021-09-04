@@ -34,7 +34,7 @@ module.exports = class PlasmaClient extends EventEmitter {
 		
 		createServer(this, port);
 		this.proxy = new Proxy(this);
-		this.loadComponents();
+		if(!process.argv.includes("--lite")) this.loadComponents();
 		
 		this.on("error", (e) => this.handleError(e, "Plasma:Core"));
 		if(process.argv.includes("-con") || process.argv.includes("--console")) consoleChat(this);
@@ -70,6 +70,7 @@ module.exports = class PlasmaClient extends EventEmitter {
 		} else {
 			mainMenu.init(this, client);
 		};
+		client.on("end", () => console.log("[Proxy] User client (you) logged out"));
 	};
 	write(name, data){
 		for(let i in this.server.clients){

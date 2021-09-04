@@ -274,7 +274,7 @@ class Proxy extends EventEmitter {
 		let route = client.isServer ? "send" : "recieve";
 		if(this.filter[route+"All"] === false) return;
 	    let { modified, shouldSend } = this._filterCheck(client, target, data, meta, route);
-		if(process.argv.includes("--packet-debug")) console.log(`[Proxy-Debug] Packet: R=${route};N=${meta.name};D=${JSON.stringify(data)}`);
+		if(process.argv.join("").includes("--packet")) console.log(`[Proxy-Debug] Packet: R=${route};N=${meta.name};D=${JSON.stringify(data)}`);
 		if(shouldSend) target.write(meta.name, modified || data);
 	};
 	_filterCheck(client, target, data, meta, route){

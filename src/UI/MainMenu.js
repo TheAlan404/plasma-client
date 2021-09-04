@@ -101,6 +101,7 @@ const mainMenuCommandDescriptions = {
 };
 
 function init(plasma, client, cb = () => null){
+	if(!client) return plasma.handleError(new Error("<Plasma.UI.MainMenu> CLIENT_UNDEFINED"));
 	let div = "-".repeat(15);
 	
 	let midText = [
