@@ -44,9 +44,6 @@ class PlasmaSocket {
         this._socket.emit('leaveRoom');
     }
 
-    createAccount(username, password) {
-        this._socket.emit('register', { username, password});
-    }
 };
 
 module.exports = PlasmaSocket;
