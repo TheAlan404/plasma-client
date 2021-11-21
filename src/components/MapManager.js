@@ -26,6 +26,11 @@ class MapManager {
 			data: (data),
 		});
 	};
+	sendBulk(obj){
+		for(let mapID in obj){
+			this.send(mapID, obj[mapID]);
+		};
+	};
 	setCursor(x, y){
 		let mapID = this.heldMapID;
 		if(!mapID) return;

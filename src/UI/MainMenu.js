@@ -31,11 +31,12 @@ const mainMenuCommands = {
 	INSTALLUPDATE: (plasma, client) => {
 		
 	},
-	NICK: async (plasma, client) => {
+	NICK: async (plasma, client, args) => {
 		client.chat([...MEDAL_INFO, new Msg("Enter nick:", "gray")]);
 		let notExit = true;
 		while(notExit){
-			let nick = await ChatListener.prompt(client);
+			let nick = args[1] || await ChatListener.prompt(client);
+			args = [];
 			if(nick == "cancel") {
 				init(plasma, client, () => client.chat(new Msg("> Change nick cancelled", "gray")));
 				return true;
@@ -55,6 +56,37 @@ const mainMenuCommands = {
 				client.chat([...MEDAL_ALERT, new Msg("Invalid nick, try again (type 'cancel' to cancel, 'reset' to reset):")]);
 			};
 		};
+		return true;
+	},
+	SOCKSPROXY: async (plasma, client, args) => {
+		client.chat([...MEDAL_INFO, new Msg("Enter socks proxy IP:", "gray")]);
+		let info = args[1] || await ChatListener.prompt(client);
+		if(info == "cancel") {
+			init(plasma, client, () => client.chat(new Msg("> Cancelled", "gray")));
+			return true;
+		};
+		if(info == "reset") {
+			plasma.proxy.setSocksProxy(null);
+			init(plasma, client, () => client.chat(new Msg("> Socks proxy has been disabled", "gray")));
+			return true;
+		};
+		let v = 5;
+		if(info.includes(";")) {
+			v = Number(info.split(";")[1]);
+			info = info.split(";")[0];
+		};
+		let host = info.split(":")[0];
+		let port = Number(info.split(":")[1]);
+		plasma.proxy.setSocksProxy({
+			host,
+			port,
+			v,
+		});
+		init(plasma, client, () => client.chat([
+			new Msg("> Socks proxy has been set to ", "gray"),
+			new Msg(`${host}:${port}`, "gold"),
+			new Msg((v === 5 ? "" : " with version " + v), "dark_aqua"),
+		]));
 		return true;
 	},
 	PREFIX: (plasma, client) => {},
@@ -77,7 +109,7 @@ const mainMenuCommands = {
 			]);
 		});
 	},
-	EXIT: async (plasma, client) => {
+	EXIT: async (plasma, client, args) => {
 		client.chat([
 			...MEDAL_ALERT,
 			new Msg("Are you sure you want to exit? [", "gray"),
@@ -86,7 +118,7 @@ const mainMenuCommands = {
 			new Msg("no", "red", null, "no ty ill play more"),
 			new Msg("]", "gray"),
 		]);
-		let answer = await ChatListener.prompt(client);
+		let answer = args[1] || await ChatListener.prompt(client);
 		let yes = answer[0].toLowerCase() === "y";
 		if(yes) process.exit();
 		init(plasma, client);

@@ -1,6 +1,7 @@
 /* Plasma Client | Proxy */
 
 const mc = require("minecraft-protocol");
+const { SocksClient } = require("socks");
 const Msg = require("@Msg");
 const mainMenu = require("./UI/MainMenu.js");
 const { EventEmitter } = require("events");
@@ -115,6 +116,7 @@ class Proxy extends EventEmitter {
 		this.targetClient = null;
 		this.targetClients = new Map();
 		this.nick = null;
+		this.socksProxy = null;
 		
 		this.entityPosition = { x: 0, y: 0, z: 0 };
 		this.addFilter("recieve", "disconnect", new ProxyFilter({
@@ -148,6 +150,24 @@ class Proxy extends EventEmitter {
 	connect(client, opts = {}){
 		const { host = "localhost", port = 25565, username = (this.nick || client.username) } = opts;
 		console.log(`[Proxy] Connecting to '${host}${port === 25565 ? "" : `:${port}`}' with username '${username}'...`);
+		let connect = this.socksProxy ? ((cli) => {
+			SocksClient.createConnection({
+				proxy: {
+					host: this.socksProxy.host,
+					port: Number(this.socksProxy.port),
+					type: Number(this.socksProxy.type),
+				},
+				command: "connect",
+				destination: {
+					host,
+					port,
+				},
+			}, (err, info) => {
+				if(err) return this.plasma.handleError(err, "Proxy+SocksProxy");
+				cli.setSocket(info.socket);
+				cli.emit("connect");
+			});
+		}) : null;
 		let target = this.createClient({ host, port, username }, true);
 
 		client._proxycb = (data, meta) => this._pass.bind(this)(client, target, data, meta);
@@ -185,6 +205,21 @@ class Proxy extends EventEmitter {
 	*/
 	setNick(username){
 		this.nick = username;
+	};
+	
+	/**
+	* Set the socks proxy for connecting
+	* @param {object} info
+	* @param {string} info.host
+	* @param {number} info.port
+	* @param {number} [info.v=5]
+	*/
+	setSocksProxy(info){
+		if(!info) return this.socksProxy = null;
+		this.socksProxy = {
+			...info,
+			type: info.type || info.v || 5,
+		};
 	};
 	
 	/**

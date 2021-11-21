@@ -1,8 +1,9 @@
 /* Plasma Client */
 const { EventEmitter } = require("events");
 const chalk = require("chalk");
-
+const fs = require("fs");
 require("module-alias/register");
+
 const { Proxy, ProxyFilter } = require("@Proxy");
 const { version } = require("./build.json");
 const { ConfigTypeMap } = require("./utils/constants.js");
@@ -14,11 +15,12 @@ const { MapManager } = require("@Components/MapManager");
 const { ChatModule } = require("@Components/ChatModule");
 const { ElevatorManager } = require("@Components/ElevatorManager");
 const { MusicPlayer } = require("@Components/MusicPlayer");
+const { MediaManager } = require("@Components/MediaManager");
 
 const createServer = require("./utils/server.js");
 const sendLogin = require("./utils/login.js");
 const clientBootstrap = require("./utils/clientBootstrap.js");
-const mainMenu = require("./UI/MainMenu.js");
+const mainMenu = require("@UI/MainMenu.js");
 const consoleChat = require("./utils/consoleChat.js");
 
 module.exports = class PlasmaClient extends EventEmitter {
@@ -34,10 +36,14 @@ module.exports = class PlasmaClient extends EventEmitter {
 		
 		createServer(this, port);
 		this.proxy = new Proxy(this);
-		if(!process.argv.includes("--lite")) this.loadComponents();
+		if(!process.argv.includes("--lite"))
+			this.loadComponents();
 		
 		this.on("error", (e) => this.handleError(e, "Plasma:Core"));
-		if(process.argv.includes("-con") || process.argv.includes("--console")) consoleChat(this);
+		if(process.argv.includes("-con") || process.argv.includes("--console"))
+			consoleChat(this);
+		if(fs.existsSync("./test.js"))
+			require("@root/test.js")(this);
 	};
 	loadComponents(){
 		let components = {
@@ -46,6 +52,7 @@ module.exports = class PlasmaClient extends EventEmitter {
 			maps: MapManager,
 			elevators: ElevatorManager,
 			musicPlayer: MusicPlayer,
+			media: MediaManager,
 		};
 		
 		for(let moduleName in components){

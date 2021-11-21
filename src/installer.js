@@ -5,7 +5,7 @@ Checks for imcompatability and installs or updates the dependencies.
 const fs = require("fs");
 const util = require("util");
 const { execSync } = require("child_process")
-const { dependencies } = require("./build.json");
+const { dependencies } = require("../package.json");
 
 module.exports = (meta) => {
 	checkNodeVersion();
@@ -15,7 +15,8 @@ module.exports = (meta) => {
 	} catch(e){
 		console.log("--- Plasma Client Install ---");
 		console.log("> Installing... (or updating)");
-		let txt = execSync("npm install "+dependencies.join(" "));
+		let txt = execSync("npm install");
+		console.log(txt.toString());
 		console.log("> Install complete! Starting...");
 		meta.depInstall = true;
 	};
@@ -32,8 +33,7 @@ function checkNodeVersion(){
 };
 
 function checkDepencencies(){
-	//if(fs.existsSync())
-	for(let dep of dependencies) {
+	for(let dep in dependencies) {
 		require.resolve(dep);
 	};
 };
